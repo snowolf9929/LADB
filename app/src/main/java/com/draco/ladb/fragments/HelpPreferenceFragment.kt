@@ -27,7 +27,7 @@ class HelpPreferenceFragment : PreferenceFragmentCompat() {
         setPreferencesFromResource(R.xml.help, rootKey)
 
         findPreference<ListPreference>(getString(R.string.language_key))?.apply {
-            value = AppCompatDelegate.getApplicationLocales().toLanguageTags().substringBefore('-')
+            value = AppCompatDelegate.getApplicationLocales().toLanguageTags().substringBefore(',')
 
             setOnPreferenceChangeListener { _, newValue ->
                 AppCompatDelegate.setApplicationLocales(

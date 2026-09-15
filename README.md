@@ -1,55 +1,48 @@
 <div align="center">
 
-### **English** | [Русский](README_RU.md)
+### **简体中文** | [English](README_EN.md) | [Русский](README_RU.md)
 
 </div>
 
 # LADB
 
-A local ADB shell for Android!
+一个适用于 Android 的本地 ADB Shell！
 
-# About this fork
+# 关于本 Fork
 
-This is a fork of [tytydraco/LADB](https://github.com/tytydraco/LADB). The app works the same way; the changes are
-listed below.
+这是 [tytydraco/LADB](https://github.com/tytydraco/LADB) 的一个 Fork。应用的使用方式与原版完全相同，改动如下：
 
-- The license check and the Google Play Services dependency are removed, along with unused permissions
-- Russian translation alongside the original English, including the shell output
-- The language can be switched in the app, and follows the system per-app language on Android 13 and up
-- Material 3 interface, with dynamic colors on Android 12 and up and a themed icon on Android 13 and up
-- Targets Android 17, including the local network permission that port discovery now requires
-- Deprecated platform APIs replaced with current ones, with the same behavior down to Android 8
-- More reliable first connection: discovery waits for the port, and the connection is verified and retried
-- The pairing is named LADB in the wireless debugging settings
-- Logging is stripped from release builds
-- Signed builds for every ABI, plus a universal one, are produced by GitHub Actions with the key from this repository
+- 移除了许可证校验、Google Play Services 依赖以及未使用的权限
+- 在原有英文之外新增了俄语翻译，包括 Shell 输出内容
+- 应用内可切换语言；在 Android 13 及更高版本上会跟随系统的应用语言设置
+- Material 3 界面：Android 12 及以上支持动态取色，Android 13 及以上支持主题图标
+- 目标版本为 Android 17，包含端口发现所需的本地网络权限
+- 用当前 API 替换了已废弃的平台 API，行为保持一致，向下兼容至 Android 8
+- 更可靠的首连体验：端口发现会等待端口就绪，连接结果会校验并自动重试
+- 在无线调试设置中，配对名称显示为 LADB
+- 发布版构建会移除日志
+- 由 GitHub Actions 使用本仓库中的密钥，为每种 ABI 生成签名构建，另有通用（universal）版本
 
-# How does it work?
+# 工作原理
 
-LADB bundles an ADB server within the app libraries. Normally, this server cannot connect to the local device because it
-requires an active USB connection. However, Android's Wireless ADB Debugging feature allows the server and the client to
-speak to each other locally.
+LADB 将 ADB 服务器打包在应用库中。通常，这种服务器无法连接本机设备，因为需要有效的 USB 连接。而 Android 的无线调试（Wireless ADB Debugging）功能可以让服务器与客户端在本机进行通信。
 
-# Initial Setup
+# 首次设置
 
-Use split-screen more or a pop-out window with LADB and Settings at the same time. This is because Android will
-invalidate the pairing information if the dialog gets dismissed. Add a Wireless Debugging connection, and copy the
-pairing code and port into LADB. Keep both windows open until the Settings dialog dismisses itself.
+请将 LADB 和系统设置同时打开，使用分屏或悬浮窗模式。因为一旦对话框被关闭，Android 会使配对信息失效。添加一个无线调试连接，然后把配对码和端口复制到 LADB 中。请保持两个窗口都打开，直到设置中的对话框自行关闭。
 
-# Issues
+# 已知问题
 
-LADB is sadly incompatible with Shizuku at the current moment. That means that if you have Shiuzuku installed, LADB will
-usually fail to connect properly. You must uninstall it and reboot to use LADB.
+遗憾的是，LADB 目前与 Shizuku 不兼容。也就是说，如果安装了 Shizuku，LADB 通常无法正常连接。要使用 LADB，必须先卸载 Shizuku 并重启手机。
 
-# Troubleshooting
+# 疑难解答
 
-Most errors can be fixed by clearing the app data for LADB, removing all Wireless Debugging connections from Settings,
-and rebooting.
+大多数错误都可以通过以下方式解决：清除 LADB 的应用数据、删除设置中的所有无线调试连接，然后重启。
 
-# License
+# 许可证
 
-The license is mostly permissive other than it does not allow unofficial builds to be released to the Google Play Store.
+许可证基本是宽松的，唯一限制是不允许将非官方构建发布到 Google Play 商店。
 
-# Privacy Policy
+# 隐私政策
 
-LADB does not send any device data outside the app. Your data is not collected or processed.
+LADB 不会将任何设备数据发送到应用之外。我们不会收集或处理您的数据。

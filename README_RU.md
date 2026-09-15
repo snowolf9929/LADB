@@ -1,6 +1,6 @@
 <div align="center">
 
-### [English](README.md) | **Русский**
+### [简体中文](README.md) | [English](README_EN.md) | **Русский**
 
 </div>
 

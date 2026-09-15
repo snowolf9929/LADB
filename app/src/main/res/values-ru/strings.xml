@@ -54,6 +54,7 @@
         <item>Системный</item>
         <item>English</item>
         <item>Русский</item>
+        <item>Китайский (упрощ.)</item>
     </string-array>
 
     <string name="tutorial_title">Руководство</string>

@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="command_hint">Shell 命令</string>
+    <string name="command_hint_waiting">等待连接…</string>
+
+    <string name="bookmarks">书签</string>
+    <string name="last_command">上一条命令</string>
+    <string name="help">帮助</string>
+    <string name="more">更多</string>
+    <string name="share">分享</string>
+    <string name="clear">清屏</string>
+    <string name="add">添加</string>
+    <string name="delete">删除</string>
+    <string name="edit">编辑</string>
+    <string name="cancel">取消</string>
+    <string name="done">完成</string>
+    <string name="pair">配对</string>
+    <string name="skip">跳过</string>
+    <string name="dismiss">关闭</string>
+
+    <string name="delete_confirm">确定要删除此项吗？</string>
+
+    <string name="snackbar_intent_failed">Intent 启动失败</string>
+
+    <string name="port_hint">端口</string>
+    <string name="code_hint">配对码</string>
+
+    <string name="pair_title">配对信息</string>
+    <string name="pair_message">您必须使用开发者选项页面的\"无线调试\"页面中的配对码将此设备连接到 LADB。如果这是您第一次操作，请点击\"帮助\"查看教程。</string>
+
+    <string name="settings">设置</string>
+    <string name="troubleshooting">疑难解答</string>
+    <string name="about">关于</string>
+
+    <string name="unpair_title">取消配对</string>
+    <string name="unpair_summary">清除所有已有的配对信息。</string>
+
+    <string name="restart_title">重启</string>
+    <string name="restart_summary">重启 ADB 服务器以应用更改的设置</string>
+
+    <string name="auto_shell_title">配对并进入 shell</string>
+    <string name="auto_shell_summary">自动进入 ADB shell；关闭后无需配对即可进入普通的非 ADB shell</string>
+
+    <string name="buffer_size_title">缓冲区大小</string>
+    <string name="buffer_size_summary">屏幕输出缓冲区的大小。增大该值可在屏幕上一次显示更多输出，但会牺牲性能。（默认值：16384）</string>
+
+    <string name="startup_command_title">启动命令</string>
+    <string name="startup_command_summary">shell 启动后要执行的命令</string>
+    <string name="startup_command_default">echo \'成功！※\\(^o^)/※\'</string>
+
+    <string name="language_title">语言</string>
+
+    <string-array name="language_entries">
+        <item>系统默认</item>
+        <item>English</item>
+        <item>Русский</item>
+        <item>简体中文</item>
+    </string-array>
+
+    <string name="tutorial_title">教程</string>
+    <string name="tutorial_summary">查看 XDA Developers 页面上的教程</string>
+
+    <string name="error_waiting_title">卡在\"等待\"状态</string>
+    <string name="error_waiting_summary">可能是您输入的配对信息有误，或者设备未被检测到。首先，请确认\"无线调试\"确实已开启。如果仍无法解决，请尝试使用 LADB 中的\"恢复出厂设置\"选项重新配对。</string>
+
+    <string name="error_no_wireless_debugging_title">没有\"无线调试\"开关</string>
+    <string name="error_no_wireless_debugging_summary">您的设备不原生支持\"无线调试\"，而这是 LADB 所必需的。您也可以使用电脑来启用此功能，即使设备不受支持；该功能会一直持续到下次重启。将设备连接到电脑并输入：adb tcpip 5555</string>
+
+    <string name="source_title">源代码</string>
+    <string name="source_summary">在 GitHub 上查看源代码</string>
+
+    <string name="shell_entered_adb">已进入 adb shell</string>
+    <string name="shell_entered_non_adb">已进入非 adb shell</string>
+
+    <string name="debug_usb_debugging_on">正在开启 USB 调试…</string>
+    <string name="debug_wireless_debugging_off_hint">未启用无线调试！</string>
+    <string name="debug_wireless_debugging_path">设置 -> 开发者选项 -> 无线调试</string>
+    <string name="debug_wireless_debugging_await">正在等待无线调试…</string>
+    <string name="debug_usb_debugging_off_hint">未启用 USB 调试！</string>
+    <string name="debug_usb_debugging_path">设置 -> 开发者选项 -> USB 调试</string>
+    <string name="debug_usb_debugging_await">正在等待 USB 调试…</string>
+
+    <string name="debug_dns_done">DNS 解析完成…</string>
+    <string name="debug_dns_timeout">DNS 解析超时！正在跳过…</string>
+    <string name="debug_dns_await">正在等待 DNS 解析…</string>
+    <string name="debug_port_found">已发现最佳 ADB 端口：%d</string>
+    <string name="debug_port_missing">未发现 ADB 端口，正在回退…</string>
+
+    <string name="debug_server_starting">正在启动 ADB 服务器…</string>
+    <string name="debug_connect_retry">无法连接，正在重试…</string>
+    <string name="debug_connect_failed">您的设备未能连接到 LADB</string>
+    <string name="debug_connect_failed_hint">如果重启后仍无法解决，请联系开发者</string>
+    <string name="debug_local_network_denied">已拒绝本地网络访问，端口发现可能会失败</string>
+
+    <string name="debug_mobile_data_hint">请关闭开发者选项中的\"始终开启移动数据\"！</string>
+    <string name="debug_mobile_data_disabling">正在关闭\"始终开启移动数据\"…</string>
+
+    <string name="debug_cycling_wireless_debugging">正在循环切换无线调试，请稍候…</string>
+    <string name="debug_wireless_debugging_turning_off">正在关闭无线调试…</string>
+    <string name="debug_wireless_debugging_turning_on">正在开启无线调试…</string>
+
+    <string name="debug_shell_dead">Shell 已无响应，正在重置…</string>
+
+    <string name="debug_pairing_requesting">正在请求配对信息</string>
+    <string name="debug_pairing_failed">配对失败！正在重试…</string>
+    <string name="debug_pairing">正在尝试配对…</string>
+</resources>
