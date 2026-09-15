@@ -82,7 +82,7 @@
         <item></item>
         <item>en</item>
         <item>ru</item>
-        <item>zh-rCN</item>
+        <item>zh-CN</item>
     </string-array>
 
     <string name="tutorial_title">Tutorial</string>
