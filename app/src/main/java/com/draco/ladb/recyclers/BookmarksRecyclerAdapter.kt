@@ -14,6 +14,7 @@ import com.draco.ladb.R
 class BookmarksRecyclerAdapter(context: Context) : RecyclerView.Adapter<BookmarksRecyclerAdapter.ViewHolder>() {
     private val list = sortedSetOf<String>()
     private val prefs = PreferenceManager.getDefaultSharedPreferences(context)
+    private val bookmarksKey = context.getString(R.string.bookmarks_key)
 
     var pickHook: (String) -> Unit = {}
     var deleteHook: (String) -> Unit = {}
@@ -28,14 +29,14 @@ class BookmarksRecyclerAdapter(context: Context) : RecyclerView.Adapter<Bookmark
     @SuppressLint("NotifyDataSetChanged")
     fun updateList(refresh: Boolean = true) {
         list.clear()
-        list.addAll(prefs.getStringSet("bookmarks", setOf()) ?: emptySet())
+        list.addAll(prefs.getStringSet(bookmarksKey, setOf()) ?: emptySet())
         if (refresh)
             notifyDataSetChanged()
     }
 
     private fun saveList() {
         with(prefs.edit()) {
-            putStringSet("bookmarks", list)
+            putStringSet(bookmarksKey, list)
             apply()
         }
     }

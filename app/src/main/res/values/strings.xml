@@ -5,6 +5,17 @@
     <string name="command_hint_waiting">Waiting for connection…</string>
 
     <string name="bookmarks">Bookmarks</string>
+    <string name="bookmarks_key" translatable="false">bookmarks</string>
+    <string name="bookmarks_seeded_key" translatable="false">bookmarks_seeded</string>
+
+    <!-- Commands put in the bookmarks the first time the app runs. Delete them in the app. -->
+    <string-array name="default_bookmarks" translatable="false">
+        <item>pm uninstall --user 0 com.miui.hybrid</item>
+        <item>pm uninstall --user 0 com.hihonor.servicecenter</item>
+        <item>pm uninstall --user 0 com.hihonor.quickengine</item>
+        <item>pm uninstall --user 0 com.huawei.fastapp</item>
+    </string-array>
+
     <string name="last_command">Last command</string>
     <string name="help">Help</string>
     <string name="more">More</string>
