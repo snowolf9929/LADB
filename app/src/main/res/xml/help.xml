@@ -8,6 +8,11 @@
             android:summary="@string/unpair_summary"
             android:title="@string/unpair_title" />
         <Preference
+            android:icon="@drawable/ic_baseline_delete_24"
+            android:key="@string/reset_keys_key"
+            android:summary="@string/reset_keys_summary"
+            android:title="@string/reset_keys_title" />
+        <Preference
             android:icon="@drawable/ic_baseline_settings_backup_restore_24"
             android:key="@string/restart_key"
             android:summary="@string/restart_summary"

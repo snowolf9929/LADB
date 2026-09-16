@@ -22,11 +22,44 @@
             android:indeterminate="true"
             app:trackCornerRadius="2dp"/>
 
+        <LinearLayout
+            android:id="@+id/device_bar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/progress"
+            android:layout_marginHorizontal="8dp"
+            android:layout_marginTop="4dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/device_selector"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:gravity="start|center_vertical"
+                android:maxLines="1"
+                android:text="@string/device_local"
+                app:icon="@drawable/ic_baseline_adb_24"
+                app:iconGravity="textStart"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/add_device"
+                style="@style/Widget.Material3.Button.IconButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:contentDescription="@string/add_remote_device"
+                app:icon="@drawable/ic_baseline_add_24"/>
+        </LinearLayout>
+
         <ScrollView
             android:id="@+id/output_scrollview"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_above="@id/command_container"
+            android:layout_below="@id/device_bar"
             android:layout_marginStart="8dp"
             android:layout_marginTop="8dp"
             android:layout_marginEnd="8dp"

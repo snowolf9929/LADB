@@ -1,7 +1,5 @@
 package com.draco.ladb.utils
 
-import android.net.ConnectivityManager
-import android.net.NetworkCapabilities
 import android.net.nsd.NsdManager
 import android.net.nsd.NsdServiceInfo
 import android.os.Build
@@ -12,14 +10,26 @@ import java.net.Inet4Address
 import java.net.NetworkInterface
 import java.text.SimpleDateFormat
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 
 private const val TAG = "DNS"
 
+/**
+ * A wireless debugging service announced on the local network.
+ *
+ * The one belonging to this device is what [DnsDiscover.adbPort] is picked
+ * from; every other address is another phone that LADB could connect to.
+ */
+data class DiscoveredService(
+    val host: String,
+    val port: Int,
+    val name: String
+)
+
 class DnsDiscover private constructor(
-    private val connectivityManager: ConnectivityManager,
     private val nsdManager: NsdManager
 ) {
     private var started = false
@@ -36,9 +46,23 @@ class DnsDiscover private constructor(
         var pendingResolves = AtomicBoolean(false)
         var aliveTime: Long? = null
 
-        fun getInstance(connectivityManager: ConnectivityManager, nsdManager: NsdManager): DnsDiscover {
-            return instance ?: DnsDiscover(connectivityManager, nsdManager).also { instance = it }
+        /** Every `_adb-tls-connect._tcp` service seen so far, keyed by service name. */
+        private val discovered = ConcurrentHashMap<String, DiscoveredService>()
+
+        fun getInstance(nsdManager: NsdManager): DnsDiscover {
+            return instance ?: DnsDiscover(nsdManager).also { instance = it }
         }
+
+        /**
+         * Devices with wireless debugging enabled that are visible on this network.
+         */
+        fun discoveredServices(): List<DiscoveredService> = discovered.values.toList()
+
+        /**
+         * The connect port currently announced by a host, if it is announcing one.
+         */
+        fun portForHost(host: String): Int? =
+            discovered.values.firstOrNull { it.host == host && it.port > 0 }?.port
     }
 
     /**
@@ -59,34 +83,35 @@ class DnsDiscover private constructor(
     }
 
     /**
-     * Returns the device's local IP address, or null if an error occurred.
+     * Every IPv4 address this device answers on, so a discovered service can be
+     * told apart from the one belonging to another device on the network.
      */
-    fun getLocalIpAddress(): String? {
-        val network = connectivityManager.activeNetwork ?: return null
-        val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return null
+    fun getLocalIpAddresses(): Set<String> {
+        val addresses = mutableSetOf<String>()
 
-        // Ensure it's a valid Wi-Fi connection
-        if (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
+        try {
+            val interfaces = NetworkInterface.getNetworkInterfaces()
+            while (interfaces.hasMoreElements()) {
+                val networkInterface = interfaces.nextElement()
+                if (!networkInterface.isUp)
+                    continue
 
-            try {
-                val interfaces = NetworkInterface.getNetworkInterfaces()
-                while (interfaces.hasMoreElements()) {
-                    val networkInterface = interfaces.nextElement()
-                    val addresses = networkInterface.inetAddresses
+                val inetAddresses = networkInterface.inetAddresses
+                while (inetAddresses.hasMoreElements()) {
+                    val inetAddress = inetAddresses.nextElement()
+                    if (inetAddress.isLoopbackAddress || inetAddress !is Inet4Address)
+                        continue
 
-                    while (addresses.hasMoreElements()) {
-                        val inetAddress = addresses.nextElement()
-                        if (!inetAddress.isLoopbackAddress && inetAddress is Inet4Address) {
-                            return inetAddress.hostAddress
-                        }
-                    }
+                    val hostAddress = inetAddress.hostAddress
+                    if (hostAddress != null)
+                        addresses.add(hostAddress)
                 }
-            } catch (e: Exception) {
-                e.printStackTrace()
             }
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
 
-        return null
+        return addresses
     }
 
     /**
@@ -173,19 +198,37 @@ class DnsDiscover private constructor(
         Log.d(TAG, "Resolve successful: $serviceInfo")
         Log.d(TAG, "Port: ${serviceInfo.port}")
 
-        val ipAddress = getLocalIpAddress()
-        Log.d("IP ADDRESS", ipAddress ?: "N/A")
-
-        val discoveredAddress = getHostAddress(serviceInfo)
-        if (ipAddress != null && discoveredAddress != ipAddress) {
-            Log.d(TAG, "IP does not match device, but not skipping...")
-            //return
-        }
-
         if (serviceInfo.port == 0) {
             Log.d(TAG, "Port is zero, skipping...")
             return
         }
+
+        val discoveredAddress = getHostAddress(serviceInfo)
+        Log.d("IP ADDRESS", discoveredAddress ?: "N/A")
+
+        /*
+         * Only the service announced by this device may set the local port.
+         * Anything else is another phone with wireless debugging turned on,
+         * which is offered as a remote device instead.
+         */
+        val localAddresses = getLocalIpAddresses()
+        val isLocal = discoveredAddress == null || localAddresses.isEmpty() ||
+                discoveredAddress in localAddresses
+
+        if (!isLocal) {
+            Log.d(TAG, "Service belongs to another device: $discoveredAddress")
+            discovered[serviceInfo.serviceName] = DiscoveredService(
+                host = discoveredAddress!!,
+                port = serviceInfo.port,
+                name = serviceInfo.serviceName
+            )
+        } else {
+            /* This device is always shown as "localhost", never as a found remote. */
+            discovered.remove(serviceInfo.serviceName)
+        }
+
+        if (!isLocal)
+            return
 
         updateIfNewest(serviceInfo)
     }
@@ -313,6 +356,7 @@ class DnsDiscover private constructor(
 
         override fun onServiceLost(service: NsdServiceInfo) {
             Log.e(TAG, "Service lost: $service")
+            discovered.remove(service.serviceName)
         }
 
         override fun onDiscoveryStopped(serviceType: String) {

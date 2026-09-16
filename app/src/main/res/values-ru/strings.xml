@@ -33,7 +33,7 @@
     <string name="about">О приложении</string>
 
     <string name="unpair_title">Отключить</string>
-    <string name="unpair_summary">Удаление всей информации о сопряжении.</string>
+    <string name="unpair_summary">Удаление всей информации о сопряжении, включая все удалённые устройства.</string>
 
     <string name="restart_title">Перезапуск</string>
     <string name="restart_summary">Перезапустите сервер ADB, чтобы применить измененные настройки</string>
@@ -104,4 +104,63 @@
     <string name="debug_pairing_requesting">Запрос информации о сопряжении</string>
     <string name="debug_pairing_failed">Не удалось выполнить сопряжение! Повторная попытка…</string>
     <string name="debug_pairing">Попытка сопряжения…</string>
+
+    <!-- Устройства -->
+    <string name="devices">Устройства</string>
+    <string name="device_local">Это устройство</string>
+    <string name="device_state_connected">Подключено</string>
+    <string name="device_state_connecting">Подключение…</string>
+    <string name="device_state_offline">Не подключено</string>
+    <string name="device_state_unauthorized">Нет авторизации</string>
+    <string name="device_state_failed">Ошибка</string>
+    <string name="device_detail">%1$s · %2$s</string>
+    <string name="device_show">Показать</string>
+    <string name="device_showing">Показано</string>
+    <string name="device_connect">Подключить</string>
+    <string name="device_connecting">Подключение…</string>
+    <string name="device_options">Действия с устройством</string>
+    <string name="device_discovered">Найдены в этой сети</string>
+    <string name="device_discovered_detail">Порт беспроводной отладки %1$d</string>
+    <string name="device_add_short">Добавить</string>
+    <string name="device_rename">Переименовать</string>
+    <string name="device_repair">Сопрячь заново</string>
+    <string name="device_set_port">Порт подключения</string>
+    <string name="device_set_port_message">Порт, показанный в верхней части страницы «Беспроводная отладка» на другом устройстве.</string>
+    <string name="device_forget">Забыть устройство</string>
+    <string name="device_forget_confirm">Забыть «%1$s»? Запись о сопряжении будет удалена, и при следующем подключении снова потребуется код сопряжения.</string>
+
+    <!-- Удалённые устройства -->
+    <string name="add_remote_device">Добавить удалённое устройство</string>
+    <string name="add_remote_message">На другом устройстве откройте «Для разработчиков» → «Беспроводная отладка» → «Сопряжение с помощью кода» и введите то, что оно покажет. Код сопряжения нужен только один раз, дальше он запоминается.</string>
+    <string name="add_hint_alias">Название (необязательно)</string>
+    <string name="add_hint_host">IP-адрес</string>
+    <string name="add_hint_pair_port">Порт сопряжения</string>
+    <string name="add_hint_code">Код сопряжения</string>
+    <string name="add_hint_connect_port">Порт подключения (необязательно)</string>
+    <string name="add_hint_connect_port_helper">Оставьте пустым для автоопределения</string>
+    <string name="pair_and_connect">Сопрячь и подключить</string>
+
+    <string name="error_pair_fields_required">Нужны IP-адрес, порт сопряжения и код сопряжения</string>
+    <string name="pairing_in_progress">Сопряжение с %1$s…</string>
+    <string name="connect_result_connected">Подключено к %1$s</string>
+    <string name="connect_result_pair_failed">Не удалось сопрячь: проверьте код и порт сопряжения</string>
+    <string name="connect_result_port_unknown">%1$s не сообщает порт подключения; посмотрите его на странице беспроводной отладки и введите вручную</string>
+    <string name="connect_result_connect_failed">Не удалось подключиться к %1$s; убедитесь, что оба устройства в одной сети</string>
+    <string name="connect_result_unauthorized">%1$s ещё не авторизовало это устройство; нажмите «Разрешить» на его экране</string>
+
+    <string name="debug_pairing_remote">Сопряжение с %1$s…</string>
+    <string name="debug_pairing_remote_failed">Не удалось сопрячь с %1$s</string>
+    <string name="debug_paired_remote">Сопряжено, подключение…</string>
+    <string name="debug_connect_remote">Подключение к %1$s…</string>
+    <string name="debug_port_unknown">%1$s не сообщает порт беспроводной отладки</string>
+    <string name="debug_remote_connected">Подключено к %1$s</string>
+    <string name="debug_remote_connect_failed">%1$s не приняло подключение</string>
+    <string name="debug_remote_unauthorized">%1$s не авторизовано; нажмите «Разрешить» на том устройстве</string>
+    <string name="debug_remote_disconnected">%1$s отключено</string>
+    <string name="debug_server_restarting">Перезапуск сервера ADB для обновления ключей сопряжения…</string>
+    <string name="shell_entered_remote">Подключено к %1$s (удалённое устройство)</string>
+
+    <string name="reset_keys_title">Сбросить ключи ADB</string>
+    <string name="reset_keys_summary">Удалить также пару ключей ADB, чтобы все устройства пришлось сопрягать заново</string>
+    <string name="reset_keys_confirm">Удалить ключи ADB и все записи о сопряжении? Это устройство и все удалённые устройства придётся сопрягать заново.</string>
 </resources>

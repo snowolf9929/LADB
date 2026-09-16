@@ -5,9 +5,12 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.text.InputType
 import android.view.*
 import android.view.inputmethod.EditorInfo
+import android.widget.LinearLayout
 import android.widget.ScrollView
+import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
@@ -26,7 +29,12 @@ import androidx.preference.PreferenceManager
 import com.draco.ladb.BuildConfig
 import com.draco.ladb.R
 import com.draco.ladb.databinding.ActivityMainBinding
+import com.draco.ladb.utils.AdbDevice
+import com.draco.ladb.utils.DiscoveredService
+import com.draco.ladb.utils.DnsDiscover
+import com.draco.ladb.viewmodels.ConnectResult
 import com.draco.ladb.viewmodels.MainActivityViewModel
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.TextInputEditText
 import kotlinx.coroutines.Dispatchers
@@ -40,6 +48,11 @@ class MainActivity : AppCompatActivity() {
     private lateinit var pairDialog: AlertDialog.Builder
 
     private var lastCommand = ""
+
+    /**
+     * Lets the open device dialog follow changes while it is on screen.
+     */
+    private var deviceDialogRebuild: (() -> Unit)? = null
 
     private var bookmarkGetResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         val text = it.data?.getStringExtra(Intent.EXTRA_TEXT) ?: return@registerForActivityResult
@@ -85,6 +98,9 @@ class MainActivity : AppCompatActivity() {
             .setNegativeButton(R.string.help, null)
             .setNeutralButton(R.string.skip, null)
 
+        binding.deviceSelector.setOnClickListener { showDeviceDialog() }
+        binding.addDevice.setOnClickListener { showAddDeviceDialog() }
+
         binding.command.setOnKeyListener { _, keyCode, keyEvent ->
             if (keyCode == KeyEvent.KEYCODE_ENTER && keyEvent.action == KeyEvent.ACTION_DOWN) {
                 sendCommandToADB()
@@ -109,7 +125,7 @@ class MainActivity : AppCompatActivity() {
         lastCommand = text
         binding.command.text = null
         lifecycleScope.launch(Dispatchers.IO) {
-            viewModel.adb.sendToShellProcess(text)
+            viewModel.adb.sendToActiveSession(text)
         }
     }
 
@@ -132,19 +148,15 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        /* Restart the activity on reset */
-        viewModel.adb.closed.observe(this) { closed ->
-            if (closed == true) {
-                val intent = Intent(this, MainActivity::class.java)
-                startActivity(intent)
-                finishAffinity()
-                exitProcess(0)
-            }
-        }
+        /* Keep the device bar and the input state in step with the devices */
+        viewModel.devices.observe(this) { devices ->
+            val active = devices.firstOrNull { it.id == viewModel.adb.activeDeviceId }
+            binding.deviceSelector.text =
+                active?.let { deviceLabel(it) } ?: getString(R.string.device_local)
 
-        /* Prepare progress bar, pairing latch, and script executing */
-        viewModel.adb.running.observe(this) { started ->
-            setReadyForInput(started == true)
+            setReadyForInput(active?.state == AdbDevice.State.CONNECTED)
+
+            deviceDialogRebuild?.invoke()
         }
     }
 
@@ -197,6 +209,11 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun onDestroy() {
+        deviceDialogRebuild = null
+        super.onDestroy()
+    }
+
     /**
      * Ask the user to pair
      */
@@ -212,7 +229,7 @@ class MainActivity : AppCompatActivity() {
 
                         lifecycleScope.launch(Dispatchers.IO) {
                             viewModel.adb.debug(getString(R.string.debug_pairing))
-                            val success = viewModel.adb.pair(port, code)
+                            val success = viewModel.adb.pair("localhost", port, code)
                             callback?.invoke(success)
                         }
                     }
@@ -244,6 +261,294 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 
+    /* ------------------------------------------------------------------ */
+    /* Devices                                                             */
+    /* ------------------------------------------------------------------ */
+
+    private fun deviceLabel(device: AdbDevice): String =
+        "${device.alias} · ${stateLabel(device.state)}"
+
+    private fun stateLabel(state: AdbDevice.State): String = getString(
+        when (state) {
+            AdbDevice.State.CONNECTED -> R.string.device_state_connected
+            AdbDevice.State.CONNECTING -> R.string.device_state_connecting
+            AdbDevice.State.UNAUTHORIZED -> R.string.device_state_unauthorized
+            AdbDevice.State.FAILED -> R.string.device_state_failed
+            AdbDevice.State.OFFLINE -> R.string.device_state_offline
+        }
+    )
+
+    /**
+     * The device picker: this device, the paired remote devices, and anything
+     * else announcing wireless debugging on this network.
+     */
+    private fun showDeviceDialog() {
+        val container = layoutInflater.inflate(R.layout.dialog_devices, null)
+        val list = container.findViewById<LinearLayout>(R.id.device_list)
+
+        val dialog = AlertDialog.Builder(this)
+            .setTitle(R.string.devices)
+            .setView(container)
+            .setPositiveButton(R.string.add_remote_device, null)
+            .setNegativeButton(R.string.dismiss, null)
+            .create()
+
+        deviceDialogRebuild = {
+            list.removeAllViews()
+
+            val devices = viewModel.devices.value.orEmpty()
+            devices.forEach { device ->
+                list.addView(buildDeviceRow(list, device, dialog))
+            }
+
+            val discovered = viewModel.discoveredDevices()
+                .distinctBy { it.host }
+                .filter { service -> devices.none { it.host == service.host } }
+
+            if (discovered.isNotEmpty()) {
+                val header = layoutInflater.inflate(R.layout.item_device_header, list, false)
+                header.findViewById<TextView>(R.id.device_header).setText(R.string.device_discovered)
+                list.addView(header)
+
+                discovered.forEach { service ->
+                    list.addView(buildDiscoveredRow(list, service))
+                }
+            }
+        }
+
+        /* The positive button always reaches the add dialog, even when the list scrolls. */
+        dialog.setOnShowListener {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                dialog.dismiss()
+                showAddDeviceDialog()
+            }
+        }
+
+        dialog.setOnDismissListener { deviceDialogRebuild = null }
+        dialog.show()
+        deviceDialogRebuild?.invoke()
+    }
+
+    private fun buildDeviceRow(parent: ViewGroup, device: AdbDevice, dialog: AlertDialog): View {
+        val row = layoutInflater.inflate(R.layout.item_device, parent, false)
+        val isActive = device.id == viewModel.adb.activeDeviceId
+
+        row.findViewById<TextView>(R.id.device_name).text = device.alias
+        row.findViewById<TextView>(R.id.device_detail).text = getString(
+            R.string.device_detail,
+            device.serial ?: device.endpoint,
+            stateLabel(device.state)
+        )
+
+        val action = row.findViewById<MaterialButton>(R.id.device_action)
+        action.setText(
+            when {
+                isActive && device.state == AdbDevice.State.CONNECTED -> R.string.device_showing
+                device.state == AdbDevice.State.CONNECTED -> R.string.device_show
+                device.state == AdbDevice.State.CONNECTING -> R.string.device_connecting
+                else -> R.string.device_connect
+            }
+        )
+        action.isEnabled = device.state != AdbDevice.State.CONNECTING
+        action.setOnClickListener { onDeviceSelected(device, dialog) }
+        row.setOnClickListener { onDeviceSelected(device, dialog) }
+
+        val more = row.findViewById<MaterialButton>(R.id.device_more)
+        more.visibility = if (device.isLocal) View.GONE else View.VISIBLE
+        more.setOnClickListener { showDeviceOptions(device) }
+
+        return row
+    }
+
+    private fun buildDiscoveredRow(parent: ViewGroup, service: DiscoveredService): View {
+        val row = layoutInflater.inflate(R.layout.item_device, parent, false)
+
+        row.findViewById<TextView>(R.id.device_name).text = service.host
+        row.findViewById<TextView>(R.id.device_detail).text =
+            getString(R.string.device_discovered_detail, service.port)
+
+        val action = row.findViewById<MaterialButton>(R.id.device_action)
+        action.setText(R.string.device_add_short)
+        action.setOnClickListener { showAddDeviceDialog(service.host) }
+        row.setOnClickListener { showAddDeviceDialog(service.host) }
+
+        row.findViewById<MaterialButton>(R.id.device_more).visibility = View.GONE
+
+        return row
+    }
+
+    private fun onDeviceSelected(device: AdbDevice, dialog: AlertDialog) {
+        dialog.dismiss()
+        viewModel.selectDevice(device.id)
+
+        if (device.state == AdbDevice.State.CONNECTED)
+            return
+
+        if (device.isLocal) {
+            pairAndStart()
+            return
+        }
+
+        /* A device that was never paired needs the pairing code from its screen. */
+        if (!device.paired) {
+            showAddDeviceDialog(device.host)
+            return
+        }
+
+        viewModel.connectDevice(device.id) { result ->
+            runOnUiThread { reportConnectResult(device.alias, device.host, result) }
+        }
+    }
+
+    private fun showDeviceOptions(device: AdbDevice) {
+        val options = arrayOf(
+            getString(R.string.device_rename),
+            getString(R.string.device_set_port),
+            getString(R.string.device_repair),
+            getString(R.string.device_forget)
+        )
+
+        AlertDialog.Builder(this)
+            .setTitle(device.alias)
+            .setItems(options) { _, which ->
+                when (which) {
+                    0 -> showRenameDialog(device)
+                    1 -> showPortDialog(device)
+                    2 -> showAddDeviceDialog(device.host)
+                    else -> confirmForgetDevice(device)
+                }
+            }
+            .show()
+    }
+
+    private fun showRenameDialog(device: AdbDevice) {
+        val container = layoutInflater.inflate(R.layout.dialog_text_input, null)
+        val input = container.findViewById<TextInputEditText>(android.R.id.edit)
+        input.setText(device.alias)
+        input.setSelection(input.text?.length ?: 0)
+
+        AlertDialog.Builder(this)
+            .setTitle(R.string.device_rename)
+            .setView(container)
+            .setPositiveButton(R.string.done) { _, _ ->
+                viewModel.renameDevice(device.id, input.text.toString())
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
+    }
+
+    /**
+     * Wireless debugging picks a new connect port every time it is switched on,
+     * so let the user copy the one shown on the other device.
+     */
+    private fun showPortDialog(device: AdbDevice) {
+        val container = layoutInflater.inflate(R.layout.dialog_text_input, null)
+        val input = container.findViewById<TextInputEditText>(android.R.id.edit)
+        input.inputType = InputType.TYPE_CLASS_NUMBER
+        if (device.port > 0)
+            input.setText(device.port.toString())
+
+        AlertDialog.Builder(this)
+            .setTitle(R.string.device_set_port)
+            .setMessage(R.string.device_set_port_message)
+            .setView(container)
+            .setPositiveButton(R.string.done) { _, _ ->
+                input.text?.toString()?.trim()?.toIntOrNull()?.let { port ->
+                    if (port > 0) viewModel.setDevicePort(device.id, port)
+                }
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
+    }
+
+    private fun confirmForgetDevice(device: AdbDevice) {
+        AlertDialog.Builder(this)
+            .setTitle(R.string.device_forget)
+            .setMessage(getString(R.string.device_forget_confirm, device.alias))
+            .setPositiveButton(R.string.delete) { _, _ -> viewModel.forgetDevice(device.id) }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
+    }
+
+    /**
+     * Add a device by pairing with it. The pairing code comes from the wireless
+     * debugging page of the other device.
+     */
+    private fun showAddDeviceDialog(prefillHost: String? = null) {
+        val container = layoutInflater.inflate(R.layout.dialog_add_device, null)
+        val aliasInput = container.findViewById<TextInputEditText>(R.id.device_alias)
+        val hostInput = container.findViewById<TextInputEditText>(R.id.device_host)
+        val pairPortInput = container.findViewById<TextInputEditText>(R.id.device_pair_port)
+        val codeInput = container.findViewById<TextInputEditText>(R.id.device_code)
+        val connectPortInput = container.findViewById<TextInputEditText>(R.id.device_connect_port)
+
+        if (!prefillHost.isNullOrBlank()) {
+            hostInput.setText(prefillHost)
+            DnsDiscover.portForHost(prefillHost)?.let { port ->
+                connectPortInput.setText(port.toString())
+            }
+        }
+
+        val dialog = AlertDialog.Builder(this)
+            .setTitle(R.string.add_remote_device)
+            .setView(container)
+            .setPositiveButton(R.string.pair_and_connect, null)
+            .setNegativeButton(R.string.cancel, null)
+            .create()
+
+        dialog.setOnShowListener {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                val host = hostInput.text.toString().trim()
+                val pairPort = pairPortInput.text.toString().trim()
+                val code = codeInput.text.toString().trim()
+
+                if (host.isBlank() || pairPort.isBlank() || code.isBlank()) {
+                    Snackbar.make(
+                        binding.output,
+                        getString(R.string.error_pair_fields_required),
+                        Snackbar.LENGTH_LONG
+                    ).show()
+                    return@setOnClickListener
+                }
+
+                dialog.dismiss()
+
+                val alias = aliasInput.text.toString().trim()
+                val connectPort = connectPortInput.text.toString().trim().ifBlank { null }
+
+                Snackbar.make(
+                    binding.output,
+                    getString(R.string.pairing_in_progress, host),
+                    Snackbar.LENGTH_SHORT
+                ).show()
+
+                viewModel.addRemoteDevice(alias, host, pairPort, code, connectPort) { result ->
+                    runOnUiThread {
+                        if (result == ConnectResult.CONNECTED) {
+                            viewModel.selectDevice(AdbDevice.remoteId(host))
+                        }
+
+                        reportConnectResult(alias.ifBlank { host }, host, result)
+                    }
+                }
+            }
+        }
+
+        dialog.show()
+    }
+
+    private fun reportConnectResult(alias: String, host: String, result: ConnectResult) {
+        val message = when (result) {
+            ConnectResult.CONNECTED -> getString(R.string.connect_result_connected, alias)
+            ConnectResult.PAIR_FAILED -> getString(R.string.connect_result_pair_failed)
+            ConnectResult.PORT_UNKNOWN -> getString(R.string.connect_result_port_unknown, host)
+            ConnectResult.CONNECT_FAILED -> getString(R.string.connect_result_connect_failed, alias)
+            ConnectResult.UNAUTHORIZED -> getString(R.string.connect_result_unauthorized, alias)
+        }
+
+        Snackbar.make(binding.output, message, Snackbar.LENGTH_LONG).show()
+    }
+
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.bookmarks -> {
@@ -270,7 +575,7 @@ class MainActivity : AppCompatActivity() {
                     val uri = FileProvider.getUriForFile(
                         this,
                         BuildConfig.APPLICATION_ID + ".provider",
-                        viewModel.adb.outputBufferFile
+                        viewModel.adb.activeOutputFile
                     )
                     val intent = Intent(Intent.ACTION_SEND)
                         .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)

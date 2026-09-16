@@ -33,7 +33,7 @@
     <string name="about">关于</string>
 
     <string name="unpair_title">取消配对</string>
-    <string name="unpair_summary">清除所有已有的配对信息。</string>
+    <string name="unpair_summary">清除所有已有的配对信息，包括全部远程设备。</string>
 
     <string name="restart_title">重启</string>
     <string name="restart_summary">重启 ADB 服务器以应用更改的设置</string>
@@ -104,4 +104,63 @@
     <string name="debug_pairing_requesting">正在请求配对信息</string>
     <string name="debug_pairing_failed">配对失败！正在重试…</string>
     <string name="debug_pairing">正在尝试配对…</string>
+
+    <!-- 设备 -->
+    <string name="devices">设备</string>
+    <string name="device_local">本机</string>
+    <string name="device_state_connected">已连接</string>
+    <string name="device_state_connecting">正在连接…</string>
+    <string name="device_state_offline">未连接</string>
+    <string name="device_state_unauthorized">未授权</string>
+    <string name="device_state_failed">连接失败</string>
+    <string name="device_detail">%1$s · %2$s</string>
+    <string name="device_show">切换</string>
+    <string name="device_showing">当前</string>
+    <string name="device_connect">连接</string>
+    <string name="device_connecting">正在连接…</string>
+    <string name="device_options">设备选项</string>
+    <string name="device_discovered">在同一网络中发现</string>
+    <string name="device_discovered_detail">无线调试端口 %1$d</string>
+    <string name="device_add_short">添加</string>
+    <string name="device_rename">重命名</string>
+    <string name="device_repair">重新配对</string>
+    <string name="device_set_port">连接端口</string>
+    <string name="device_set_port_message">对方手机「无线调试」页面顶部显示的端口。</string>
+    <string name="device_forget">忘记设备</string>
+    <string name="device_forget_confirm">要忘记「%1$s」吗？它的配对记录会被删除，下次连接需要重新输入配对码。</string>
+
+    <!-- 远程设备 -->
+    <string name="add_remote_device">添加远程设备</string>
+    <string name="add_remote_message">在对方手机上打开「开发者选项 → 无线调试 → 使用配对码配对设备」，然后把页面上显示的内容填到下面。配对码只需输入一次，之后会被记住。</string>
+    <string name="add_hint_alias">设备名称（可选）</string>
+    <string name="add_hint_host">IP 地址</string>
+    <string name="add_hint_pair_port">配对端口</string>
+    <string name="add_hint_code">配对码</string>
+    <string name="add_hint_connect_port">连接端口（可选）</string>
+    <string name="add_hint_connect_port_helper">留空则自动查找</string>
+    <string name="pair_and_connect">配对并连接</string>
+
+    <string name="error_pair_fields_required">IP 地址、配对端口和配对码都必须填写</string>
+    <string name="pairing_in_progress">正在与 %1$s 配对…</string>
+    <string name="connect_result_connected">已连接到 %1$s</string>
+    <string name="connect_result_pair_failed">配对失败，请检查配对码和配对端口</string>
+    <string name="connect_result_port_unknown">没有发现 %1$s 的连接端口，请在对方手机的「无线调试」页面查看后手动填写</string>
+    <string name="connect_result_connect_failed">无法连接到 %1$s，请确认两台设备在同一网络</string>
+    <string name="connect_result_unauthorized">%1$s 尚未授权本机，请在对方手机上点击「允许」</string>
+
+    <string name="debug_pairing_remote">正在与 %1$s 配对…</string>
+    <string name="debug_pairing_remote_failed">无法与 %1$s 配对</string>
+    <string name="debug_paired_remote">配对成功，正在连接…</string>
+    <string name="debug_connect_remote">正在连接 %1$s…</string>
+    <string name="debug_port_unknown">%1$s 没有广播无线调试端口</string>
+    <string name="debug_remote_connected">已连接到 %1$s</string>
+    <string name="debug_remote_connect_failed">%1$s 没有接受连接</string>
+    <string name="debug_remote_unauthorized">%1$s 未授权，请在对方手机上点击「允许」</string>
+    <string name="debug_remote_disconnected">%1$s 已断开</string>
+    <string name="debug_server_restarting">正在重启 ADB 服务器以刷新配对密钥…</string>
+    <string name="shell_entered_remote">已连接到 %1$s（远程设备）</string>
+
+    <string name="reset_keys_title">重置配对密钥</string>
+    <string name="reset_keys_summary">同时删除 ADB 密钥文件，所有设备（包括本机）都需要重新配对</string>
+    <string name="reset_keys_confirm">要删除 ADB 密钥和所有配对记录吗？本机和全部远程设备都需要重新配对。</string>
 </resources>

@@ -11,6 +11,7 @@ import androidx.core.os.LocaleListCompat
 import androidx.preference.*
 import com.draco.ladb.R
 import com.draco.ladb.utils.ADB
+import com.draco.ladb.utils.PairedDeviceStore
 import com.draco.ladb.views.MainActivity
 import com.google.android.material.snackbar.Snackbar
 import kotlin.system.exitProcess
@@ -49,10 +50,30 @@ class HelpPreferenceFragment : PreferenceFragmentCompat() {
         when (preference.key) {
             getString(R.string.unpair_key) -> {
                 val context = requireContext()
+                /* Remote devices have to be paired again as well. */
+                PairedDeviceStore(context).clear()
                 PreferenceManager.getDefaultSharedPreferences(context).edit(commit = true) {
                     putBoolean(context.getString(R.string.paired_key), false)
                 }
                 restartApp()
+            }
+
+            getString(R.string.reset_keys_key) -> {
+                AlertDialog.Builder(requireContext())
+                    .setTitle(R.string.reset_keys_title)
+                    .setMessage(R.string.reset_keys_confirm)
+                    .setPositiveButton(R.string.delete) { _, _ ->
+                        val context = requireContext()
+                        PairedDeviceStore(context).clear()
+                        PreferenceManager.getDefaultSharedPreferences(context).edit(commit = true) {
+                            putBoolean(context.getString(R.string.paired_key), false)
+                        }
+                        /* Drop the paired keys themselves, not just the records. */
+                        adb.resetKeys()
+                        restartApp()
+                    }
+                    .setNegativeButton(R.string.cancel, null)
+                    .show()
             }
 
             getString(R.string.restart_key) -> restartApp()

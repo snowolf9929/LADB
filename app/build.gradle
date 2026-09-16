@@ -15,8 +15,8 @@ android {
         applicationId = "com.draco.ladb"
         minSdk = 26
         targetSdk = 37
-        versionCode = 55
-        versionName = "2.6"
+        versionCode = 56
+        versionName = "2.7"
 
         resConfigs "en", "ru", "zh-rCN"
     }

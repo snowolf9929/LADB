@@ -23,6 +23,7 @@ listed below.
 - The pairing is named LADB in the wireless debugging settings
 - Logging is stripped from release builds
 - Signed builds for every ABI, plus a universal one, are produced by GitHub Actions with the key from this repository
+- Remote devices: debug another phone on the same network over wireless debugging. The pairing is saved, so later connections need no pairing code
 
 # How does it work?
 
@@ -35,6 +36,43 @@ speak to each other locally.
 Use split-screen more or a pop-out window with LADB and Settings at the same time. This is because Android will
 invalidate the pairing information if the dialog gets dismissed. Add a Wireless Debugging connection, and copy the
 pairing code and port into LADB. Keep both windows open until the Settings dialog dismisses itself.
+
+
+# Debugging another phone
+
+Besides this device, LADB can drive another phone on the same network that has Wireless debugging turned on (Android 11
+and up). No computer is involved.
+
+## First connection (pairing once)
+
+1. On the **other device**, open Settings → Developer options → Wireless debugging and leave it on;
+2. Tap "Pair device with pairing code" and note the **IP address, pairing port and 6-digit pairing code**;
+3. In LADB on **this device**, tap ＋ in the device bar at the top ("Add remote device") and fill in a name (optional),
+   the IP address, the pairing port and the pairing code;
+   - The connect port may be left empty: LADB finds it over mDNS. It can also be copied from the top of the Wireless
+     debugging page on the other device;
+4. Tap "Pair & connect". The other device may show "Allow USB debugging?"; tap "Allow" there once.
+
+## Later connections (no pairing code)
+
+Once paired, the pairing is kept in the app's private storage:
+
+- `files/.android/adbkey` and `adbkey.pub` — this device's ADB key, which is what the pairing actually is;
+- `files/.android/adb_known_hosts*` — the host key remembered during pairing;
+- The device list (IP, name, last used port) is kept in the app settings.
+
+So **the second connection is just**: open LADB → tap the device bar → pick the device → tap "Connect".
+
+> Wireless debugging hands out a **new connect port** every time it is switched on, so the port is not permanent. LADB
+> discovers the current one over mDNS; if that fails, set it by hand with "Connect port" in the device menu (⋮).
+
+## Notes and limits
+
+- Both devices have to be on the same local network (the same Wi-Fi, or one sharing its hotspot);
+- This device needs no confirmation, but a remote device shows an authorization dialog that somebody has to accept;
+- LADB's own ADB server still listens on `127.0.0.1:5037` only, so nothing else on the network can reach it;
+- Pairing records are cleared with "Forget device" in the device menu, "Unpair" and "Reset ADB keys" in the settings.
+  The last one also deletes the ADB key pair, so every device has to be paired again.
 
 # Issues
 

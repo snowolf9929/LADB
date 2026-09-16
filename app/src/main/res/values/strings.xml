@@ -44,7 +44,7 @@
     <string name="about">About</string>
 
     <string name="unpair_title">Unpair</string>
-    <string name="unpair_summary">Erasing any existing pairing information.</string>
+    <string name="unpair_summary">Erasing any existing pairing information, including every remote device.</string>
     <string name="unpair_key" translatable="false">unpair</string>
 
     <string name="restart_title">Restart</string>
@@ -144,4 +144,65 @@
     <string name="debug_pairing_requesting">Requesting pairing information</string>
     <string name="debug_pairing_failed">Failed to pair! Trying again…</string>
     <string name="debug_pairing">Trying to pair…</string>
+
+    <!-- Devices -->
+    <string name="devices">Devices</string>
+    <string name="device_local">This device</string>
+    <string name="device_state_connected">Connected</string>
+    <string name="device_state_connecting">Connecting…</string>
+    <string name="device_state_offline">Not connected</string>
+    <string name="device_state_unauthorized">Unauthorized</string>
+    <string name="device_state_failed">Failed</string>
+    <string name="device_detail">%1$s · %2$s</string>
+    <string name="device_show">Show</string>
+    <string name="device_showing">Showing</string>
+    <string name="device_connect">Connect</string>
+    <string name="device_connecting">Connecting…</string>
+    <string name="device_options">Device options</string>
+    <string name="device_discovered">Found on this network</string>
+    <string name="device_discovered_detail">Wireless debugging port %1$d</string>
+    <string name="device_add_short">Add</string>
+    <string name="device_rename">Rename</string>
+    <string name="device_repair">Pair again</string>
+    <string name="device_set_port">Connect port</string>
+    <string name="device_set_port_message">The port shown at the top of the Wireless debugging page on the other device.</string>
+    <string name="device_forget">Forget device</string>
+    <string name="device_forget_confirm">Forget \"%1$s\"? Its pairing record is deleted and the next connection needs a pairing code again.</string>
+
+    <!-- Remote devices -->
+    <string name="add_remote_device">Add remote device</string>
+    <string name="add_remote_message">On the other device, open Developer options → Wireless debugging → \"Pair device with pairing code\" and fill in what it shows. The pairing code is only needed once; it is remembered afterwards.</string>
+    <string name="add_hint_alias">Name (optional)</string>
+    <string name="add_hint_host">IP address</string>
+    <string name="add_hint_pair_port">Pairing port</string>
+    <string name="add_hint_code">Pairing code</string>
+    <string name="add_hint_connect_port">Connect port (optional)</string>
+    <string name="add_hint_connect_port_helper">Leave empty to find it automatically</string>
+    <string name="pair_and_connect">Pair &amp; connect</string>
+
+    <string name="error_pair_fields_required">The IP address, pairing port and pairing code are required</string>
+    <string name="pairing_in_progress">Pairing with %1$s…</string>
+    <string name="connect_result_connected">Connected to %1$s</string>
+    <string name="connect_result_pair_failed">Pairing failed; check the pairing code and the pairing port</string>
+    <string name="connect_result_port_unknown">No connect port announced by %1$s; read it from its wireless debugging page and enter it manually</string>
+    <string name="connect_result_connect_failed">Could not connect to %1$s; make sure both devices are on the same network</string>
+    <string name="connect_result_unauthorized">%1$s has not authorized this device yet; tap \"Allow\" on its screen</string>
+
+    <string name="debug_pairing_remote">Pairing with %1$s…</string>
+    <string name="debug_pairing_remote_failed">Could not pair with %1$s</string>
+    <string name="debug_paired_remote">Paired, connecting…</string>
+    <string name="debug_connect_remote">Connecting to %1$s…</string>
+    <string name="debug_port_unknown">No wireless debugging port announced by %1$s</string>
+    <string name="debug_remote_connected">Connected to %1$s</string>
+    <string name="debug_remote_connect_failed">%1$s did not accept the connection</string>
+    <string name="debug_remote_unauthorized">%1$s is unauthorized; tap \"Allow\" on that device</string>
+    <string name="debug_remote_disconnected">%1$s disconnected</string>
+    <string name="debug_server_restarting">Restarting the ADB server to refresh the pairing keys…</string>
+    <string name="shell_entered_remote">Connected to %1$s (remote device)</string>
+
+    <string name="reset_keys_title">Reset ADB keys</string>
+    <string name="reset_keys_summary">Delete the ADB key pair as well, so that every device has to be paired from scratch</string>
+    <string name="reset_keys_key" translatable="false">reset_keys</string>
+    <string name="reset_keys_confirm">Delete the ADB keys and every pairing record? This device and all remote devices will need to be paired again.</string>
+    <string name="remote_devices_key" translatable="false">remote_devices</string>
 </resources>
