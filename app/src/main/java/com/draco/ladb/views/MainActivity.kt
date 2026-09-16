@@ -133,7 +133,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setReadyForInput(ready: Boolean) {
-        binding.command.isEnabled = ready
+        /*
+         * The layout owns the box, the label and their colours, and disabling
+         * it runs through to the EditText inside. Enabling the EditText on its
+         * own leaves the layout believing it is still enabled, so the label
+         * sits in whatever state it was left in until something else moves it.
+         */
+        binding.commandContainer.isEnabled = ready
         binding.progress.visibility = if (ready) View.INVISIBLE else View.VISIBLE
 
         /*
