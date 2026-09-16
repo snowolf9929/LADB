@@ -8,6 +8,15 @@ import androidx.core.content.edit
 import androidx.preference.PreferenceManager
 
 class LadbApplication : Application(), Application.ActivityLifecycleCallbacks {
+    private companion object {
+        /**
+         * Bump this when commands are added to `default_bookmarks`, so an
+         * existing install picks them up once. Commands the user deleted under
+         * an older version come back with them.
+         */
+        const val DEFAULT_BOOKMARKS_VERSION = 2
+    }
+
     override fun onCreate() {
         super.onCreate()
 
@@ -19,16 +28,15 @@ class LadbApplication : Application(), Application.ActivityLifecycleCallbacks {
     }
 
     /**
-     * Put the bundled commands into the bookmarks the first time the app runs.
-     *
-     * The latch means a command the user deleted stays deleted, and bookmarks
-     * an existing install already had are kept.
+     * Put the bundled commands into the bookmarks of a fresh install, and add
+     * any command that a newer version brought along. Bookmarks the user added
+     * are kept, and nothing is written twice.
      */
     private fun seedDefaultBookmarks() {
         val prefs = PreferenceManager.getDefaultSharedPreferences(this)
-        val seededKey = getString(R.string.bookmarks_seeded_key)
+        val versionKey = getString(R.string.bookmarks_version_key)
 
-        if (prefs.getBoolean(seededKey, false))
+        if (prefs.getInt(versionKey, 0) >= DEFAULT_BOOKMARKS_VERSION)
             return
 
         val bookmarksKey = getString(R.string.bookmarks_key)
@@ -37,7 +45,7 @@ class LadbApplication : Application(), Application.ActivityLifecycleCallbacks {
 
         prefs.edit {
             putStringSet(bookmarksKey, existing + defaults)
-            putBoolean(seededKey, true)
+            putInt(versionKey, DEFAULT_BOOKMARKS_VERSION)
         }
     }
 

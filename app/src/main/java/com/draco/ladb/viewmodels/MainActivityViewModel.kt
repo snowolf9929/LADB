@@ -483,7 +483,8 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
     }
 
     /**
-     * Drop a remote device's shell, and its connection.
+     * Drop a remote device's shell, and its connection. The pairing is kept,
+     * so it can be brought back with one tap.
      */
     fun disconnectDevice(id: String) {
         val host = AdbDevice.hostOf(id) ?: return
@@ -492,7 +493,13 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
             val serial = adb.session(id)?.serial
             adb.closeSession(id)
             if (serial != null) adb.disconnect(serial)
+
             remoteStates[id] = AdbDevice.State.OFFLINE
+            reconnectAttempts.remove(id)
+
+            /* Nothing left to type into, so fall back to this device. */
+            if (adb.activeDeviceId == id) selectDevice(AdbDevice.LOCAL_ID)
+
             refreshDevices()
         }
     }

@@ -118,8 +118,9 @@
     <string name="device_state_unauthorized">Нет авторизации</string>
     <string name="device_state_failed">Ошибка</string>
     <string name="device_detail">%1$s · %2$s</string>
+    <string name="device_detail_active">%1$s · %2$s · показано</string>
     <string name="device_show">Показать</string>
-    <string name="device_showing">Показано</string>
+    <string name="device_disconnect">Отключить</string>
     <string name="device_connect">Подключить</string>
     <string name="device_connecting">Подключение…</string>
     <string name="device_options">Действия с устройством</string>

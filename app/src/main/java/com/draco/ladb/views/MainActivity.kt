@@ -358,7 +358,10 @@ class MainActivity : AppCompatActivity() {
 
         row.findViewById<TextView>(R.id.device_name).text = device.alias
         row.findViewById<TextView>(R.id.device_detail).text = getString(
-            R.string.device_detail,
+            if (isActive && device.state == AdbDevice.State.CONNECTED)
+                R.string.device_detail_active
+            else
+                R.string.device_detail,
             device.serial ?: device.endpoint,
             stateLabel(device.state)
         )
@@ -366,7 +369,8 @@ class MainActivity : AppCompatActivity() {
         val action = row.findViewById<MaterialButton>(R.id.device_action)
         action.setText(
             when {
-                isActive && device.state == AdbDevice.State.CONNECTED -> R.string.device_showing
+                /* The one being shown is the one that can be dropped. */
+                isActive && device.state == AdbDevice.State.CONNECTED -> R.string.device_disconnect
                 device.state == AdbDevice.State.CONNECTED -> R.string.device_show
                 device.state == AdbDevice.State.CONNECTING -> R.string.device_connecting
                 else -> R.string.device_connect
@@ -374,7 +378,7 @@ class MainActivity : AppCompatActivity() {
         )
         action.isEnabled = device.state != AdbDevice.State.CONNECTING
         action.setOnClickListener { onDeviceSelected(device, dialog) }
-        row.setOnClickListener { onDeviceSelected(device, dialog) }
+        row.setOnClickListener { onDeviceRowSelected(device, dialog) }
 
         val more = row.findViewById<MaterialButton>(R.id.device_more)
         more.visibility = if (device.isLocal) View.GONE else View.VISIBLE
@@ -402,6 +406,21 @@ class MainActivity : AppCompatActivity() {
 
     private fun onDeviceSelected(device: AdbDevice, dialog: AlertDialog) {
         dialog.dismiss()
+
+        /* The device on screen was asked to drop its connection. */
+        if (device.id == viewModel.adb.activeDeviceId && device.state == AdbDevice.State.CONNECTED) {
+            viewModel.disconnectDevice(device.id)
+            return
+        }
+
+        onDeviceRowSelected(device, dialog)
+    }
+
+    /**
+     * Tapping the row only ever switches the shell, whatever the device state.
+     */
+    private fun onDeviceRowSelected(device: AdbDevice, dialog: AlertDialog) {
+        dialog.dismiss()
         viewModel.selectDevice(device.id)
 
         if (device.state == AdbDevice.State.CONNECTED)
@@ -424,23 +443,29 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showDeviceOptions(device: AdbDevice) {
-        val options = arrayOf(
-            getString(R.string.device_rename),
-            getString(R.string.device_set_port),
-            getString(R.string.device_repair),
-            getString(R.string.device_forget)
-        )
+        val options = mutableListOf<String>()
+        val actions = mutableListOf<() -> Unit>()
+
+        if (device.state == AdbDevice.State.CONNECTED) {
+            options.add(getString(R.string.device_disconnect))
+            actions.add { viewModel.disconnectDevice(device.id) }
+        }
+
+        options.add(getString(R.string.device_rename))
+        actions.add { showRenameDialog(device) }
+
+        options.add(getString(R.string.device_set_port))
+        actions.add { showPortDialog(device) }
+
+        options.add(getString(R.string.device_repair))
+        actions.add { showAddDeviceDialog(device.host) }
+
+        options.add(getString(R.string.device_forget))
+        actions.add { confirmForgetDevice(device) }
 
         AlertDialog.Builder(this)
             .setTitle(device.alias)
-            .setItems(options) { _, which ->
-                when (which) {
-                    0 -> showRenameDialog(device)
-                    1 -> showPortDialog(device)
-                    2 -> showAddDeviceDialog(device.host)
-                    else -> confirmForgetDevice(device)
-                }
-            }
+            .setItems(options.toTypedArray()) { _, which -> actions[which].invoke() }
             .show()
     }
 

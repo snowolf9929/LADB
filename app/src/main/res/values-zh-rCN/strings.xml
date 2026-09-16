@@ -118,8 +118,9 @@
     <string name="device_state_unauthorized">未授权</string>
     <string name="device_state_failed">连接失败</string>
     <string name="device_detail">%1$s · %2$s</string>
+    <string name="device_detail_active">%1$s · %2$s · 当前显示</string>
     <string name="device_show">切换</string>
-    <string name="device_showing">当前</string>
+    <string name="device_disconnect">断开连接</string>
     <string name="device_connect">连接</string>
     <string name="device_connecting">正在连接…</string>
     <string name="device_options">设备选项</string>
