@@ -253,6 +253,20 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
             val context = getApplication<Application>()
             val id = AdbDevice.remoteId(host)
 
+            /*
+             * Store and show the device before pairing: the pairing takes a
+             * while, and its progress belongs in that device's own output.
+             */
+            val record = deviceStore.find(host) ?: RemoteDevice(host)
+            if (alias.isNotBlank()) {
+                record.alias = alias
+                record.named = true
+            }
+            val port = connectPort?.toIntOrNull()?.takeIf { it > 0 }
+            if (port != null) record.lastPort = port
+            deviceStore.save(record)
+            selectDevice(id)
+
             setState(id, AdbDevice.State.CONNECTING)
             adb.debug(context.getString(R.string.debug_pairing_remote, "$host:$pairPort"), id)
 
@@ -265,14 +279,6 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
             if (!paired) {
                 adb.debug(context.getString(R.string.debug_pairing_remote_failed, host), id)
                 setState(id, AdbDevice.State.FAILED)
-                deviceStore.save(
-                    (deviceStore.find(host) ?: RemoteDevice(host)).also { record ->
-                        if (alias.isNotBlank()) {
-                            record.alias = alias
-                            record.named = true
-                        }
-                    }
-                )
                 refreshDevices()
                 onResult(ConnectResult.PAIR_FAILED)
                 return@launch
@@ -280,15 +286,7 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
 
             adb.debug(context.getString(R.string.debug_paired_remote), id)
 
-            val port = connectPort?.toIntOrNull()
-            val record = deviceStore.find(host) ?: RemoteDevice(host)
-            if (alias.isNotBlank()) {
-                record.alias = alias
-                record.named = true
-            }
-            record.paired = true
-            if (port != null && port > 0) record.lastPort = port
-            deviceStore.save(record)
+            deviceStore.update(host) { it.paired = true }
 
             onResult(establish(host, manualPort = port, allowServerRestart = true))
         }

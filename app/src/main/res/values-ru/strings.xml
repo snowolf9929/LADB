@@ -145,9 +145,7 @@
     <string name="add_hint_connect_port_helper">Оставьте пустым для автоопределения</string>
     <string name="pair_and_connect">Сопрячь и подключить</string>
 
-    <string name="error_pair_fields_required">Нужны IP-адрес, порт сопряжения и код сопряжения</string>
-    <string name="pairing_in_progress">Сопряжение с %1$s…</string>
-    <string name="connect_result_connected">Подключено к %1$s</string>
+    <string name="error_field_required">Обязательно</string>
     <string name="connect_result_pair_failed">Не удалось сопрячь: проверьте код и порт сопряжения</string>
     <string name="connect_result_port_unknown">%1$s не сообщает порт подключения; посмотрите его на странице беспроводной отладки и введите вручную</string>
     <string name="connect_result_connect_failed">Не удалось подключиться к %1$s; убедитесь, что оба устройства в одной сети</string>

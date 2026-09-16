@@ -201,9 +201,7 @@
     <string name="add_hint_connect_port_helper">Leave empty to find it automatically</string>
     <string name="pair_and_connect">Pair &amp; connect</string>
 
-    <string name="error_pair_fields_required">The IP address, pairing port and pairing code are required</string>
-    <string name="pairing_in_progress">Pairing with %1$s…</string>
-    <string name="connect_result_connected">Connected to %1$s</string>
+    <string name="error_field_required">Required</string>
     <string name="connect_result_pair_failed">Pairing failed; check the pairing code and the pairing port</string>
     <string name="connect_result_port_unknown">No connect port announced by %1$s; read it from its wireless debugging page and enter it manually</string>
     <string name="connect_result_connect_failed">Could not connect to %1$s; make sure both devices are on the same network</string>

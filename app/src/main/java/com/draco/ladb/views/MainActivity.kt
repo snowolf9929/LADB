@@ -24,6 +24,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updateLayoutParams
+import androidx.core.widget.doAfterTextChanged
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.draco.ladb.BuildConfig
@@ -37,6 +38,7 @@ import com.draco.ladb.viewmodels.MainActivityViewModel
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.textfield.TextInputLayout
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlin.system.exitProcess
@@ -530,12 +532,21 @@ class MainActivity : AppCompatActivity() {
         val codeInput = container.findViewById<TextInputEditText>(R.id.device_code)
         val connectPortInput = container.findViewById<TextInputEditText>(R.id.device_connect_port)
 
+        val hostLayout = container.findViewById<TextInputLayout>(R.id.device_host_layout)
+        val pairPortLayout = container.findViewById<TextInputLayout>(R.id.device_pair_port_layout)
+        val codeLayout = container.findViewById<TextInputLayout>(R.id.device_code_layout)
+
         if (!prefillHost.isNullOrBlank()) {
             hostInput.setText(prefillHost)
             DnsDiscover.portForHost(prefillHost)?.let { port ->
                 connectPortInput.setText(port.toString())
             }
         }
+
+        /* A field stops complaining as soon as it is being filled in. */
+        hostInput.doAfterTextChanged { hostLayout.error = null }
+        pairPortInput.doAfterTextChanged { pairPortLayout.error = null }
+        codeInput.doAfterTextChanged { codeLayout.error = null }
 
         val dialog = AlertDialog.Builder(this)
             .setTitle(R.string.add_remote_device)
@@ -550,34 +561,21 @@ class MainActivity : AppCompatActivity() {
                 val pairPort = pairPortInput.text.toString().trim()
                 val code = codeInput.text.toString().trim()
 
-                if (host.isBlank() || pairPort.isBlank() || code.isBlank()) {
-                    Snackbar.make(
-                        binding.output,
-                        getString(R.string.error_pair_fields_required),
-                        Snackbar.LENGTH_LONG
-                    ).show()
+                /* Point at the missing fields instead of a message behind the dialog. */
+                hostLayout.error = requiredError(host)
+                pairPortLayout.error = requiredError(pairPort)
+                codeLayout.error = requiredError(code)
+
+                if (host.isBlank() || pairPort.isBlank() || code.isBlank())
                     return@setOnClickListener
-                }
 
                 dialog.dismiss()
 
                 val alias = aliasInput.text.toString().trim()
                 val connectPort = connectPortInput.text.toString().trim().ifBlank { null }
 
-                Snackbar.make(
-                    binding.output,
-                    getString(R.string.pairing_in_progress, host),
-                    Snackbar.LENGTH_SHORT
-                ).show()
-
                 viewModel.addRemoteDevice(alias, host, pairPort, code, connectPort) { result ->
-                    runOnUiThread {
-                        if (result == ConnectResult.CONNECTED) {
-                            viewModel.selectDevice(AdbDevice.remoteId(host))
-                        }
-
-                        reportConnectResult(alias.ifBlank { host }, host, result)
-                    }
+                    runOnUiThread { reportConnectResult(alias.ifBlank { host }, host, result) }
                 }
             }
         }
@@ -585,9 +583,16 @@ class MainActivity : AppCompatActivity() {
         dialog.show()
     }
 
+    private fun requiredError(value: String): String? =
+        if (value.isBlank()) getString(R.string.error_field_required) else null
+
+    /**
+     * Only failures are announced here. A connection that worked already shows
+     * up in the shell output and in the device bar.
+     */
     private fun reportConnectResult(alias: String, host: String, result: ConnectResult) {
         val message = when (result) {
-            ConnectResult.CONNECTED -> getString(R.string.connect_result_connected, alias)
+            ConnectResult.CONNECTED -> return
             ConnectResult.PAIR_FAILED -> getString(R.string.connect_result_pair_failed)
             ConnectResult.PORT_UNKNOWN -> getString(R.string.connect_result_port_unknown, host)
             ConnectResult.CONNECT_FAILED -> getString(R.string.connect_result_connect_failed, alias)
