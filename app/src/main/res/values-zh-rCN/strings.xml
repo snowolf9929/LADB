@@ -33,7 +33,9 @@
     <string name="about">关于</string>
 
     <string name="unpair_title">取消配对</string>
-    <string name="unpair_summary">清除所有已有的配对信息，包括全部远程设备。</string>
+    <string name="unpair_summary">选择要取消配对的设备：本机或某一台远程设备。</string>
+    <string name="unpair_all">全部设备</string>
+    <string name="unpair_done">已取消「%1$s」的配对</string>
 
     <string name="restart_title">重启</string>
     <string name="restart_summary">重启 ADB 服务器以应用更改的设置</string>
@@ -132,7 +134,7 @@
     <!-- 远程设备 -->
     <string name="add_remote_device">添加远程设备</string>
     <string name="add_remote_message">在对方手机上打开「开发者选项 → 无线调试 → 使用配对码配对设备」，然后把页面上显示的内容填到下面。配对码只需输入一次，之后会被记住。</string>
-    <string name="add_hint_alias">设备名称（可选）</string>
+    <string name="add_hint_alias">设备名称（留空则按「品牌:型号」自动命名）</string>
     <string name="add_hint_host">IP 地址</string>
     <string name="add_hint_pair_port">配对端口</string>
     <string name="add_hint_code">配对码</string>
@@ -154,6 +156,7 @@
     <string name="debug_connect_remote">正在连接 %1$s…</string>
     <string name="debug_port_unknown">%1$s 没有广播无线调试端口</string>
     <string name="debug_remote_connected">已连接到 %1$s</string>
+    <string name="debug_auto_named">已按设备信息命名：%1$s</string>
     <string name="debug_remote_connect_failed">%1$s 没有接受连接</string>
     <string name="debug_remote_unauthorized">%1$s 未授权，请在对方手机上点击「允许」</string>
     <string name="debug_remote_disconnected">%1$s 已断开</string>

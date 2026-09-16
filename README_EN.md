@@ -71,8 +71,11 @@ So **the second connection is just**: open LADB → tap the device bar → pick 
 - Both devices have to be on the same local network (the same Wi-Fi, or one sharing its hotspot);
 - This device needs no confirmation, but a remote device shows an authorization dialog that somebody has to accept;
 - LADB's own ADB server still listens on `127.0.0.1:5037` only, so nothing else on the network can reach it;
-- Pairing records are cleared with "Forget device" in the device menu, "Unpair" and "Reset ADB keys" in the settings.
-  The last one also deletes the ADB key pair, so every device has to be paired again.
+- Device names: leave the name empty and LADB asks the device itself for `ro.product.brand:ro.product.model` once it is
+  connected. A name you typed is never overwritten; clearing it hands the naming back to LADB.
+- Clearing pairings: "Forget device" in the device menu drops one remote device, "Unpair" in the settings lets you pick
+  this device, a single remote device or all of them, and "Reset ADB keys" also deletes the key pair. The key is shared
+  by every device, so that last one is always global and everything has to be paired again.
 
 # Issues
 

@@ -44,7 +44,9 @@
     <string name="about">About</string>
 
     <string name="unpair_title">Unpair</string>
-    <string name="unpair_summary">Erasing any existing pairing information, including every remote device.</string>
+    <string name="unpair_summary">Reset the pairing of a single device: this device, or any one of the remote devices.</string>
+    <string name="unpair_all">All devices</string>
+    <string name="unpair_done">Unpaired %1$s</string>
     <string name="unpair_key" translatable="false">unpair</string>
 
     <string name="restart_title">Restart</string>
@@ -172,7 +174,7 @@
     <!-- Remote devices -->
     <string name="add_remote_device">Add remote device</string>
     <string name="add_remote_message">On the other device, open Developer options → Wireless debugging → \"Pair device with pairing code\" and fill in what it shows. The pairing code is only needed once; it is remembered afterwards.</string>
-    <string name="add_hint_alias">Name (optional)</string>
+    <string name="add_hint_alias">Name (empty to take it from the device)</string>
     <string name="add_hint_host">IP address</string>
     <string name="add_hint_pair_port">Pairing port</string>
     <string name="add_hint_code">Pairing code</string>
@@ -194,6 +196,7 @@
     <string name="debug_connect_remote">Connecting to %1$s…</string>
     <string name="debug_port_unknown">No wireless debugging port announced by %1$s</string>
     <string name="debug_remote_connected">Connected to %1$s</string>
+    <string name="debug_auto_named">Named after the device: %1$s</string>
     <string name="debug_remote_connect_failed">%1$s did not accept the connection</string>
     <string name="debug_remote_unauthorized">%1$s is unauthorized; tap \"Allow\" on that device</string>
     <string name="debug_remote_disconnected">%1$s disconnected</string>

@@ -18,6 +18,8 @@ import org.json.JSONObject
 data class RemoteDevice(
     val host: String,
     var alias: String = "",
+    /** True when the user typed the name, false when LADB named it after the device. */
+    var named: Boolean = false,
     var lastPort: Int = 0,
     var paired: Boolean = false,
     var lastConnectedAt: Long = 0L
@@ -45,9 +47,16 @@ class PairedDeviceStore(context: Context) {
                 val host = item.optString(JSON_HOST)
                 if (host.isBlank()) return@mapNotNull null
 
+                val alias = item.optString(JSON_ALIAS)
+
                 RemoteDevice(
                     host = host,
-                    alias = item.optString(JSON_ALIAS),
+                    alias = alias,
+                    /*
+                     * Records written before auto-naming existed can only hold
+                     * a name the user typed.
+                     */
+                    named = item.optBoolean(JSON_NAMED, alias.isNotBlank()),
                     lastPort = item.optInt(JSON_PORT),
                     paired = item.optBoolean(JSON_PAIRED),
                     lastConnectedAt = item.optLong(JSON_CONNECTED)
@@ -101,6 +110,7 @@ class PairedDeviceStore(context: Context) {
             array.put(JSONObject().apply {
                 put(JSON_HOST, device.host)
                 put(JSON_ALIAS, device.alias)
+                put(JSON_NAMED, device.named)
                 put(JSON_PORT, device.lastPort)
                 put(JSON_PAIRED, device.paired)
                 put(JSON_CONNECTED, device.lastConnectedAt)
@@ -113,6 +123,7 @@ class PairedDeviceStore(context: Context) {
     private companion object {
         const val JSON_HOST = "host"
         const val JSON_ALIAS = "alias"
+        const val JSON_NAMED = "named"
         const val JSON_PORT = "port"
         const val JSON_PAIRED = "paired"
         const val JSON_CONNECTED = "last_connected"

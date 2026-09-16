@@ -33,7 +33,9 @@
     <string name="about">О приложении</string>
 
     <string name="unpair_title">Отключить</string>
-    <string name="unpair_summary">Удаление всей информации о сопряжении, включая все удалённые устройства.</string>
+    <string name="unpair_summary">Сбросить сопряжение одного устройства: этого или любого удалённого.</string>
+    <string name="unpair_all">Все устройства</string>
+    <string name="unpair_done">Сопряжение с %1$s снято</string>
 
     <string name="restart_title">Перезапуск</string>
     <string name="restart_summary">Перезапустите сервер ADB, чтобы применить измененные настройки</string>
@@ -132,7 +134,7 @@
     <!-- Удалённые устройства -->
     <string name="add_remote_device">Добавить удалённое устройство</string>
     <string name="add_remote_message">На другом устройстве откройте «Для разработчиков» → «Беспроводная отладка» → «Сопряжение с помощью кода» и введите то, что оно покажет. Код сопряжения нужен только один раз, дальше он запоминается.</string>
-    <string name="add_hint_alias">Название (необязательно)</string>
+    <string name="add_hint_alias">Название (пусто — имя будет «бренд:модель»)</string>
     <string name="add_hint_host">IP-адрес</string>
     <string name="add_hint_pair_port">Порт сопряжения</string>
     <string name="add_hint_code">Код сопряжения</string>
@@ -154,6 +156,7 @@
     <string name="debug_connect_remote">Подключение к %1$s…</string>
     <string name="debug_port_unknown">%1$s не сообщает порт беспроводной отладки</string>
     <string name="debug_remote_connected">Подключено к %1$s</string>
+    <string name="debug_auto_named">Имя получено от устройства: %1$s</string>
     <string name="debug_remote_connect_failed">%1$s не приняло подключение</string>
     <string name="debug_remote_unauthorized">%1$s не авторизовано; нажмите «Разрешить» на том устройстве</string>
     <string name="debug_remote_disconnected">%1$s отключено</string>

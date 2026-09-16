@@ -155,6 +155,38 @@ class ADB(private val context: Context) {
     }
 
     /**
+     * Read a system property from a connected device.
+     */
+    fun getProperty(serial: String, name: String): String? {
+        val process = adb(false, listOf("-s", serial, "shell", "getprop", name))
+
+        return try {
+            process.waitFor(15, TimeUnit.SECONDS)
+            BufferedReader(process.inputStream.reader()).readText().trim().ifBlank { null }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        } finally {
+            process.destroyForcibly()
+        }
+    }
+
+    /**
+     * How a device names itself: "brand:model", or whichever half it reports.
+     */
+    fun getDeviceName(serial: String): String? {
+        val brand = getProperty(serial, "ro.product.brand")
+        val model = getProperty(serial, "ro.product.model")
+
+        return when {
+            brand != null && model != null -> "$brand:$model"
+            model != null -> model
+            brand != null -> brand
+            else -> null
+        }
+    }
+
+    /**
      * Start the ADB server and connect this device to itself.
      */
     fun initServer(): Boolean {

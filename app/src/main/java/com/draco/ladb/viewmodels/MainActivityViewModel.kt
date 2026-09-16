@@ -247,7 +247,10 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
                 setState(id, AdbDevice.State.FAILED)
                 deviceStore.save(
                     (deviceStore.find(host) ?: RemoteDevice(host)).also { record ->
-                        if (alias.isNotBlank()) record.alias = alias
+                        if (alias.isNotBlank()) {
+                            record.alias = alias
+                            record.named = true
+                        }
                     }
                 )
                 refreshDevices()
@@ -259,7 +262,10 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
 
             val port = connectPort?.toIntOrNull()
             val record = deviceStore.find(host) ?: RemoteDevice(host)
-            if (alias.isNotBlank()) record.alias = alias
+            if (alias.isNotBlank()) {
+                record.alias = alias
+                record.named = true
+            }
             record.paired = true
             if (port != null && port > 0) record.lastPort = port
             deviceStore.save(record)
@@ -319,7 +325,34 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
         openRemoteSession(host, port)
         adb.debug(context.getString(R.string.debug_remote_connected, "$host:$port"), id)
 
+        /* Give the device its own name, unless the user already gave it one. */
+        viewModelScope.launch(Dispatchers.IO) {
+            autoNameRemote(host, "$host:$port")
+        }
+
         return ConnectResult.CONNECTED
+    }
+
+    /**
+     * Name a device after itself, as "brand:model", when the user did not name
+     * it. A device that could not be asked keeps its previous name.
+     */
+    private fun autoNameRemote(host: String, serial: String) {
+        val record = deviceStore.find(host) ?: return
+        if (record.named) return
+
+        val name = adb.getDeviceName(serial) ?: return
+        if (name == record.alias) {
+            refreshDevices()
+            return
+        }
+
+        deviceStore.update(host) { it.alias = name }
+        adb.debug(
+            getApplication<Application>().getString(R.string.debug_auto_named, name),
+            AdbDevice.remoteId(host)
+        )
+        refreshDevices()
     }
 
     /**
@@ -369,9 +402,17 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
         }
     }
 
+    /**
+     * Name a device by hand. Clearing the name hands it back to [autoNameRemote].
+     */
     fun renameDevice(id: String, alias: String) {
         val host = AdbDevice.hostOf(id) ?: return
-        deviceStore.update(host) { it.alias = alias.trim() }
+        val name = alias.trim()
+
+        deviceStore.update(host) {
+            it.alias = name
+            it.named = name.isNotBlank()
+        }
         refreshDevices()
     }
 

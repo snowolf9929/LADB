@@ -209,6 +209,12 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        /* Devices may have been unpaired in the settings. */
+        viewModel.refreshDevices()
+    }
+
     override fun onDestroy() {
         deviceDialogRebuild = null
         super.onDestroy()
