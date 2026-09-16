@@ -76,9 +76,13 @@ So **the second connection is just**: open LADB → tap the device bar → pick 
 - Clearing pairings: "Forget device" in the device menu drops one remote device, "Unpair" in the settings lets you pick
   this device, a single remote device or all of them, and "Reset ADB keys" also deletes the key pair. The key is shared
   by every device, so that last one is always global and everything has to be paired again.
-- **The other device has to stay awake.** Android switches wireless debugging off by itself after the screen turns off or
-  the network changes: `AdbDebuggingManager` sets `adb_wifi_enabled` to 0 on a Wi-Fi disconnect or a BSSID change. That
-  is the platform, not LADB, so keep that screen awake while debugging it:
+- **The other device drops the session when its screen turns off.** Android switches wireless debugging off by itself
+  after the screen turns off or the network changes: `AdbDebuggingManager` sets `adb_wifi_enabled` to 0 on a Wi-Fi
+  disconnect or a BSSID change. What LADB does about it:
+  - **Awake by default.** With "Settings → Keep remote devices awake" on, a `input keyevent KEYCODE_WAKEUP` is sent to
+    the device every 15 seconds while it is connected, so its screen never gets the chance to sleep. A device that is
+    already awake ignores it. The cost is that **that screen stays lit**; turn the switch off to let it sleep;
+  - with that off, keep it awake another way:
   - plug it in and run `settings put global stay_on_while_plugged_in 7` from LADB, which is the same as
     Developer options → "Stay awake", and `settings put global stay_on_while_plugged_in 0` to put it back. Both are
     in the default bookmarks; or
@@ -88,7 +92,8 @@ So **the second connection is just**: open LADB → tap the device bar → pick 
   > `settings put system` needs `WRITE_SETTINGS` and is refused on many devices with
   > `SecurityException: Writing to settings requires:android.permission.WRITE_SETTINGS` — so do not reach for
   > `screen_off_timeout`.
-- A dropped device is retried three times, four seconds apart. If its wireless debugging really was switched off the
+- A dropped device is retried three times, four seconds apart, dropping the dead transport in the ADB server first and
+  trying every port it knows. If its wireless debugging really was switched off the
   retries fail and the output says why (`adb: …; its wireless debugging: no longer announced, probably switched off`)
   along with what to do about it.
 - "Settings → Keep this screen on" (on by default) stops this phone from sleeping while a remote device is connected,

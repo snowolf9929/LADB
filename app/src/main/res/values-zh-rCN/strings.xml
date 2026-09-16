@@ -44,6 +44,8 @@
     <string name="auto_shell_summary">自动进入 ADB shell；关闭后无需配对即可进入普通的非 ADB shell</string>
     <string name="keep_awake_title">调试远程设备时保持屏幕常亮</string>
     <string name="keep_awake_summary">连接着远程设备期间不熄屏，避免系统在调试中途冻结 LADB 以及它启动的 ADB 服务器</string>
+    <string name="keep_remote_awake_title">保持远程设备唤醒</string>
+    <string name="keep_remote_awake_summary">连接对方期间，每隔十几秒给它发一次唤醒键（KEYCODE_WAKEUP）：Android 会在对方息屏后自动关闭无线调试，从而导致连接断开。关掉这个开关，对方屏幕就能正常休眠</string>
 
     <string name="buffer_size_title">缓冲区大小</string>
     <string name="buffer_size_summary">屏幕输出缓冲区的大小。增大该值可在屏幕上一次显示更多输出，但会牺牲性能。（默认值：16384）</string>

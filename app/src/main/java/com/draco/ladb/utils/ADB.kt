@@ -163,6 +163,29 @@ class ADB(private val context: Context) {
     }
 
     /**
+     * The serials of the remote devices that currently hold a shell.
+     */
+    fun remoteSerials(): List<String> =
+        sessions.filterKeys { it != AdbDevice.LOCAL_ID }.values.map { it.serial }
+
+    /**
+     * Send a key event to a device. It runs in a shell of its own, so it cannot
+     * land in whatever is being typed into that device's session.
+     */
+    fun sendKey(serial: String, key: String): Boolean {
+        val process = adb(false, listOf("-s", serial, "shell", "input", "keyevent", key))
+
+        return try {
+            process.waitFor(15, TimeUnit.SECONDS) && process.exitValue() == 0
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        } finally {
+            process.destroyForcibly()
+        }
+    }
+
+    /**
      * Read a system property from a connected device.
      */
     fun getProperty(serial: String, name: String): String? {

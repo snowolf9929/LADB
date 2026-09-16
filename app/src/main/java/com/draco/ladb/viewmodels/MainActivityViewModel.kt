@@ -19,6 +19,7 @@ import com.draco.ladb.utils.DnsDiscover
 import com.draco.ladb.utils.PairedDeviceStore
 import com.draco.ladb.utils.RemoteDevice
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.io.File
@@ -48,6 +49,14 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
 
         /** How long to wait for mDNS to announce a device when nothing else is known. */
         const val DISCOVERY_WAIT_MS = 5_000L
+
+        /**
+         * How often a connected remote device is nudged awake. It has to be
+         * well under the shortest screen timeout Android ships with.
+         */
+        const val WAKE_INTERVAL_MS = 15_000L
+
+        const val WAKE_KEY = "KEYCODE_WAKEUP"
     }
 
     private val _outputText = MutableLiveData<String>()
@@ -103,6 +112,34 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
         /* Keep the device list in step with the local ADB server. */
         viewModelScope.launch {
             adb.running.asFlow().collect { refreshDevices() }
+        }
+
+        /* Keep the other devices from falling asleep on us. */
+        viewModelScope.launch(Dispatchers.IO) {
+            while (isActive) {
+                delay(WAKE_INTERVAL_MS)
+                keepRemoteDevicesAwake()
+            }
+        }
+    }
+
+    /**
+     * Nudge the screen of every connected remote device.
+     *
+     * Android switches wireless debugging off once that screen turns off, which
+     * drops the session, so a wake key is sent well inside its screen timeout.
+     * A device that is already awake ignores it.
+     */
+    private fun keepRemoteDevicesAwake() {
+        val context = getApplication<Application>()
+
+        val wanted = PreferenceManager.getDefaultSharedPreferences(context)
+            .getBoolean(context.getString(R.string.keep_remote_awake_key), true)
+
+        if (!wanted) return
+
+        adb.remoteSerials().forEach { serial ->
+            adb.sendKey(serial, WAKE_KEY)
         }
     }
 

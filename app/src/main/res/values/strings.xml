@@ -87,6 +87,10 @@
     <string name="keep_awake_summary">While a remote device is connected, so Android does not freeze LADB and the ADB server it started in the middle of a session
     </string>
     <string name="keep_awake_key" translatable="false">keep_awake</string>
+    <string name="keep_remote_awake_title">Keep remote devices awake</string>
+    <string name="keep_remote_awake_summary">While a remote device is connected, a wake key is sent to it well inside its screen timeout: Android switches its wireless debugging off once that screen turns off, which drops the session. Turn this off to let that screen sleep
+    </string>
+    <string name="keep_remote_awake_key" translatable="false">keep_remote_awake</string>
 
     <string name="buffer_size_title">Buffer size</string>
     <string name="buffer_size_summary">The size of the screen output buffer. Increasing this value will show more output
