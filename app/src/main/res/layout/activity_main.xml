@@ -87,7 +87,8 @@
             android:layout_alignParentBottom="true"
             android:layout_marginHorizontal="8dp"
             android:layout_marginBottom="12dp"
-            android:hint="@string/command_hint">
+            android:hint="@string/command_hint"
+            app:expandedHintEnabled="false">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/command"

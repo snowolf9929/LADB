@@ -147,9 +147,12 @@ class MainActivity : AppCompatActivity() {
          * of on every status line that lands in the output.
          */
         if (ready && !wasReadyForInput) {
-            binding.command.requestFocus()
-            WindowCompat.getInsetsController(window, binding.command)
-                .show(WindowInsetsCompat.Type.ime())
+            /* Once the layout pass that enabling the field just triggered is done. */
+            binding.command.post {
+                binding.command.requestFocus()
+                WindowCompat.getInsetsController(window, binding.command)
+                    .show(WindowInsetsCompat.Type.ime())
+            }
         }
 
         wasReadyForInput = ready
