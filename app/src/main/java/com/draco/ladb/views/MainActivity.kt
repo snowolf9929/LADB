@@ -52,6 +52,9 @@ class MainActivity : AppCompatActivity() {
     /** Whether the shell was already usable, so the keyboard is only asked once. */
     private var wasReadyForInput = false
 
+    /** The window flag as it stands, so it is only changed when it has to be. */
+    private var keepScreenOn = false
+
     /**
      * Lets the open device dialog follow changes while it is on screen.
      */
@@ -186,11 +189,17 @@ class MainActivity : AppCompatActivity() {
      * freezes a backgrounded app and the ADB server it started.
      */
     private fun applyKeepScreenOn(devices: List<AdbDevice>) {
-        val wantsIt = PreferenceManager.getDefaultSharedPreferences(this)
-            .getBoolean(getString(R.string.keep_awake_key), true)
-        val remoteConnected = devices.any { !it.isLocal && it.state == AdbDevice.State.CONNECTED }
+        val wanted = PreferenceManager.getDefaultSharedPreferences(this)
+            .getBoolean(getString(R.string.keep_awake_key), true) &&
+                devices.any { !it.isLocal && it.state == AdbDevice.State.CONNECTED }
 
-        if (wantsIt && remoteConnected)
+        /* Touching the window flags relayouts the whole window, so only do it on a change. */
+        if (wanted == keepScreenOn)
+            return
+
+        keepScreenOn = wanted
+
+        if (wanted)
             window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         else
             window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
