@@ -42,6 +42,8 @@
 
     <string name="auto_shell_title">配对并进入 shell</string>
     <string name="auto_shell_summary">自动进入 ADB shell；关闭后无需配对即可进入普通的非 ADB shell</string>
+    <string name="keep_awake_title">调试远程设备时保持屏幕常亮</string>
+    <string name="keep_awake_summary">连接着远程设备期间不熄屏，避免系统在调试中途冻结 LADB 以及它启动的 ADB 服务器</string>
 
     <string name="buffer_size_title">缓冲区大小</string>
     <string name="buffer_size_summary">屏幕输出缓冲区的大小。增大该值可在屏幕上一次显示更多输出，但会牺牲性能。（默认值：16384）</string>
@@ -167,6 +169,7 @@
     <string name="reason_state">状态 %1$s</string>
     <string name="reason_announced">仍在广播</string>
     <string name="reason_not_announced">已停止广播，可能已被关闭</string>
+    <string name="debug_remote_lost_hint">Android 会在对方息屏或网络变化后自动关闭无线调试，调试期间请让对方手机保持屏幕常亮：开发者选项 → 「不锁定屏幕」，或把「休眠」时间调长。</string>
     <string name="debug_server_restarting">正在重启 ADB 服务器以刷新配对密钥…</string>
     <string name="shell_entered_remote">已连接到 %1$s（远程设备）</string>
 

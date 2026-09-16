@@ -69,6 +69,10 @@
         without pairing
     </string>
     <string name="auto_shell_key" translatable="false">auto_shell</string>
+    <string name="keep_awake_title">Keep this screen on</string>
+    <string name="keep_awake_summary">While a remote device is connected, so Android does not freeze LADB and the ADB server it started in the middle of a session
+    </string>
+    <string name="keep_awake_key" translatable="false">keep_awake</string>
 
     <string name="buffer_size_title">Buffer size</string>
     <string name="buffer_size_summary">The size of the screen output buffer. Increasing this value will show more output
@@ -218,6 +222,7 @@
     <string name="reason_state">state %1$s</string>
     <string name="reason_announced">still announced</string>
     <string name="reason_not_announced">no longer announced, probably switched off</string>
+    <string name="debug_remote_lost_hint">Android switches wireless debugging off by itself once the screen turns off or the network changes, so keep the screen of that device awake while debugging it: Developer options → \"Stay awake\", or a longer screen timeout.</string>
     <string name="debug_server_restarting">Restarting the ADB server to refresh the pairing keys…</string>
     <string name="shell_entered_remote">Connected to %1$s (remote device)</string>
 

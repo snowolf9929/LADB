@@ -76,6 +76,17 @@ So **the second connection is just**: open LADB → tap the device bar → pick 
 - Clearing pairings: "Forget device" in the device menu drops one remote device, "Unpair" in the settings lets you pick
   this device, a single remote device or all of them, and "Reset ADB keys" also deletes the key pair. The key is shared
   by every device, so that last one is always global and everything has to be paired again.
+- **The other device has to stay awake.** Android switches wireless debugging off by itself after the screen turns off or
+  the network changes: `AdbDebuggingManager` sets `adb_wifi_enabled` to 0 on a Wi-Fi disconnect or a BSSID change. That
+  is the platform, not LADB, so keep that screen awake while debugging it:
+  - Developer options → "Stay awake" (while charging), or
+  - a longer screen timeout, for instance `settings put system screen_off_timeout 1800000` (30 minutes) from LADB,
+    and `settings put system screen_off_timeout 30000` to put it back.
+- A dropped device is retried three times, four seconds apart. If its wireless debugging really was switched off the
+  retries fail and the output says why (`adb: …; its wireless debugging: no longer announced, probably switched off`)
+  along with what to do about it.
+- "Settings → Keep this screen on" (on by default) stops this phone from sleeping while a remote device is connected,
+  so Android cannot freeze LADB and the ADB server it started in the middle of a session.
 
 # Issues
 

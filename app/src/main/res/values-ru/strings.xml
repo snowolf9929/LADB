@@ -42,6 +42,8 @@
 
     <string name="auto_shell_title">Подключение &amp; shell</string>
     <string name="auto_shell_summary">Автоматический вход в ADB shell; при отключении вход в обычную, не adb оболочку без сопряжения</string>
+    <string name="keep_awake_title">Не выключать экран</string>
+    <string name="keep_awake_summary">Пока подключено удалённое устройство, чтобы система не заморозила LADB и запущенный им сервер ADB посреди сеанса</string>
 
     <string name="buffer_size_title">Размер буфера</string>
     <string name="buffer_size_summary">Размер выходного буфера экрана. Увеличение этого значения приведет к одновременному отображению большего объёма выводимого текста на экране за счет производительности. (По умолчанию: 16384)</string>
@@ -167,6 +169,7 @@
     <string name="reason_state">состояние %1$s</string>
     <string name="reason_announced">всё ещё объявляется</string>
     <string name="reason_not_announced">больше не объявляется, вероятно выключена</string>
+    <string name="debug_remote_lost_hint">Android сам выключает беспроводную отладку после отключения экрана или смены сети, поэтому во время отладки держите экран того устройства включённым: Для разработчиков → «Не выключать экран» или большее время до отключения экрана.</string>
     <string name="debug_server_restarting">Перезапуск сервера ADB для обновления ключей сопряжения…</string>
     <string name="shell_entered_remote">Подключено к %1$s (удалённое устройство)</string>
 

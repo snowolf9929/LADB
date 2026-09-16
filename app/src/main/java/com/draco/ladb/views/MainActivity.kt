@@ -156,8 +156,25 @@ class MainActivity : AppCompatActivity() {
 
             setReadyForInput(active?.state == AdbDevice.State.CONNECTED)
 
+            applyKeepScreenOn(devices)
+
             deviceDialogRebuild?.invoke()
         }
+    }
+
+    /**
+     * While another device is being debugged, keep this screen awake: Android
+     * freezes a backgrounded app and the ADB server it started.
+     */
+    private fun applyKeepScreenOn(devices: List<AdbDevice>) {
+        val wantsIt = PreferenceManager.getDefaultSharedPreferences(this)
+            .getBoolean(getString(R.string.keep_awake_key), true)
+        val remoteConnected = devices.any { !it.isLocal && it.state == AdbDevice.State.CONNECTED }
+
+        if (wantsIt && remoteConnected)
+            window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        else
+            window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     }
 
     /**

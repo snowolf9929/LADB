@@ -24,6 +24,13 @@
             android:summary="@string/auto_shell_summary"
             android:title="@string/auto_shell_title"
             android:widgetLayout="@layout/preference_widget_material_switch" />
+        <com.draco.ladb.views.SwitchInfoPreference
+            android:defaultValue="true"
+            android:icon="@drawable/ic_baseline_adb_24"
+            android:key="@string/keep_awake_key"
+            android:summary="@string/keep_awake_summary"
+            android:title="@string/keep_awake_title"
+            android:widgetLayout="@layout/preference_widget_material_switch" />
         <EditTextPreference
             android:defaultValue="16384"
             android:dialogLayout="@layout/dialog_text_input"

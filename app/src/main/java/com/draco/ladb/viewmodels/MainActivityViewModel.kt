@@ -414,6 +414,14 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
 
             remoteStates[id] = AdbDevice.State.OFFLINE
             adb.debug(disconnectReason(host, session.serial, alias), id)
+
+            /*
+             * A device that stopped announcing itself had wireless debugging
+             * switched off, which Android does on its own after a screen off.
+             */
+            if (DnsDiscover.portForHost(host) == null)
+                adb.debug(context.getString(R.string.debug_remote_lost_hint), id)
+
             refreshDevices()
         }
     }
