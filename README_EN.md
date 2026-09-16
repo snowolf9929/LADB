@@ -79,9 +79,15 @@ So **the second connection is just**: open LADB → tap the device bar → pick 
 - **The other device has to stay awake.** Android switches wireless debugging off by itself after the screen turns off or
   the network changes: `AdbDebuggingManager` sets `adb_wifi_enabled` to 0 on a Wi-Fi disconnect or a BSSID change. That
   is the platform, not LADB, so keep that screen awake while debugging it:
-  - Developer options → "Stay awake" (while charging), or
-  - a longer screen timeout, for instance `settings put system screen_off_timeout 1800000` (30 minutes) from LADB,
-    and `settings put system screen_off_timeout 30000` to put it back.
+  - plug it in and run `settings put global stay_on_while_plugged_in 7` from LADB, which is the same as
+    Developer options → "Stay awake", and `settings put global stay_on_while_plugged_in 0` to put it back. Both are
+    in the default bookmarks; or
+  - set it by hand on that device: Developer options → "Stay awake", or a longer screen timeout.
+
+  > Mind the namespace: `settings put global` only needs `WRITE_SECURE_SETTINGS`, which the shell user holds, while
+  > `settings put system` needs `WRITE_SETTINGS` and is refused on many devices with
+  > `SecurityException: Writing to settings requires:android.permission.WRITE_SETTINGS` — so do not reach for
+  > `screen_off_timeout`.
 - A dropped device is retried three times, four seconds apart. If its wireless debugging really was switched off the
   retries fail and the output says why (`adb: …; its wireless debugging: no longer announced, probably switched off`)
   along with what to do about it.

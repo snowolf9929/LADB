@@ -14,7 +14,18 @@
         <item>pm uninstall --user 0 com.hihonor.servicecenter</item>
         <item>pm uninstall --user 0 com.hihonor.quickengine</item>
         <item>pm uninstall --user 0 com.huawei.fastapp</item>
-        <!-- Run these against the remote device, to keep its screen from sleeping -->
+        <!--
+          Run these against the remote device. The global namespace only needs
+          WRITE_SECURE_SETTINGS, which the shell user holds; the system namespace
+          needs WRITE_SETTINGS and is refused on many devices.
+          7 = plugged in by AC, USB or wirelessly.
+        -->
+        <item>settings put global stay_on_while_plugged_in 7</item>
+        <item>settings put global stay_on_while_plugged_in 0</item>
+    </string-array>
+
+    <!-- Commands an older version put there by mistake; removed on upgrade. -->
+    <string-array name="retired_bookmarks" translatable="false">
         <item>settings put system screen_off_timeout 1800000</item>
         <item>settings put system screen_off_timeout 30000</item>
     </string-array>

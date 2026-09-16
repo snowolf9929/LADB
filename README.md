@@ -65,8 +65,10 @@ LADB 将 ADB 服务器打包在应用库中。通常，这种服务器无法连�
 - 设备名称：添加时留空即可，LADB 连上后会自动按设备自己上报的 `ro.product.brand:ro.product.model`（品牌:型号）命名；手动改的名字不会被自动覆盖，把名字清空则重新回到自动命名。
 - 清除配对：「设备菜单 → 忘记设备」删掉单台远程设备；「设置 → 取消配对」可以选择本机、某一台远程设备或全部设备；「设置 → 重置配对密钥」会连 ADB 密钥文件一起删除——密钥是所有设备共用的，所以这一项必然是全局的，删了之后所有设备都要重新配对。
 - **对方手机要一直亮着屏**：Android 会在对方息屏或网络变化后自动关闭无线调试——AOSP `AdbDebuggingManager` 里就是「WiFi 断开」或「BSSID 变化」就把 `adb_wifi_enabled` 置 0。这是手机系统的行为，LADB 绕不过去。调试期间让对方屏幕常亮，二选一：
-  - 开发者选项 → 「不锁定屏幕」（充电时生效）；
-  - 把对方的息屏时间调长，例如在 LADB 里执行 `settings put system screen_off_timeout 1800000`（30 分钟），用完执行 `settings put system screen_off_timeout 30000` 恢复。
+  - 让对方插着充电器，在 LADB 里执行 `settings put global stay_on_while_plugged_in 7`（等同于开发者选项里的「不锁定屏幕」，充电时永不熄屏），用完执行 `settings put global stay_on_while_plugged_in 0` 恢复；这两条已放进默认书签；
+  - 或者在对方手机上手动打开 开发者选项 → 「不锁定屏幕」，或把「休眠」时间调长。
+
+  > 注意命令的命名空间：`settings put global` 只需要 `WRITE_SECURE_SETTINGS`（shell 用户有），而 `settings put system` 需要 `WRITE_SETTINGS`，很多机型会直接抛 `SecurityException: Writing to settings requires:android.permission.WRITE_SETTINGS` —— 所以别用 `screen_off_timeout`。
 - 掉线后 LADB 会自动重连 3 次（间隔 4 秒）；若对方无线调试确实被系统关掉，重连会失败，输出里会写明原因（`adb：…；对方无线调试：已停止广播，可能已被关闭`）并给出提示。
 - 「设置 → 调试远程设备时保持屏幕常亮」（默认开）：连接着远程设备时不让本机熄屏，避免系统冻住 LADB 和它启动的 ADB 服务器。
 

@@ -10,11 +10,11 @@ import androidx.preference.PreferenceManager
 class LadbApplication : Application(), Application.ActivityLifecycleCallbacks {
     private companion object {
         /**
-         * Bump this when commands are added to `default_bookmarks`, so an
-         * existing install picks them up once. Commands the user deleted under
-         * an older version come back with them.
+         * Bump this when `default_bookmarks` changes, so an existing install
+         * picks the change up once. Commands the user deleted under an older
+         * version come back with it.
          */
-        const val DEFAULT_BOOKMARKS_VERSION = 2
+        const val DEFAULT_BOOKMARKS_VERSION = 3
     }
 
     override fun onCreate() {
@@ -28,9 +28,10 @@ class LadbApplication : Application(), Application.ActivityLifecycleCallbacks {
     }
 
     /**
-     * Put the bundled commands into the bookmarks of a fresh install, and add
-     * any command that a newer version brought along. Bookmarks the user added
-     * are kept, and nothing is written twice.
+     * Put the bundled commands into the bookmarks of a fresh install, and bring
+     * an existing install in step with a newer version: the new commands are
+     * added, the ones that were dropped are taken out, and bookmarks the user
+     * added are left alone.
      */
     private fun seedDefaultBookmarks() {
         val prefs = PreferenceManager.getDefaultSharedPreferences(this)
@@ -42,9 +43,10 @@ class LadbApplication : Application(), Application.ActivityLifecycleCallbacks {
         val bookmarksKey = getString(R.string.bookmarks_key)
         val existing = prefs.getStringSet(bookmarksKey, emptySet()) ?: emptySet()
         val defaults = resources.getStringArray(R.array.default_bookmarks)
+        val retired = resources.getStringArray(R.array.retired_bookmarks).toSet()
 
         prefs.edit {
-            putStringSet(bookmarksKey, existing + defaults)
+            putStringSet(bookmarksKey, (existing - retired) + defaults)
             putInt(versionKey, DEFAULT_BOOKMARKS_VERSION)
         }
     }
