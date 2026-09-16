@@ -92,6 +92,7 @@
 
     <string name="debug_server_starting">Запуск сервера ADB…</string>
     <string name="debug_connect_retry">Не удалось подключиться, повтор…</string>
+    <string name="debug_dropping_stale">Сбрасываем мёртвое подключение к %1$s…</string>
     <string name="debug_connect_failed">Ваше устройство не подключилось к LADB</string>
     <string name="debug_connect_failed_hint">Если перезагрузка не помогает, обратитесь к разработчику</string>
     <string name="debug_local_network_denied">Доступ к локальной сети запрещён, поиск порта может не сработать</string>

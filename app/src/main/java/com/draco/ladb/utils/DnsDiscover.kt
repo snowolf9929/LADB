@@ -26,7 +26,9 @@ private const val TAG = "DNS"
 data class DiscoveredService(
     val host: String,
     val port: Int,
-    val name: String
+    val name: String,
+    /** When this announcement was resolved, so the newest one wins. */
+    val foundAt: Long = 0L
 )
 
 class DnsDiscover private constructor(
@@ -59,10 +61,15 @@ class DnsDiscover private constructor(
         fun discoveredServices(): List<DiscoveredService> = discovered.values.toList()
 
         /**
-         * The connect port currently announced by a host, if it is announcing one.
+         * The connect port currently announced by a host, if it is announcing
+         * one. A device that restarts wireless debugging announces a new
+         * instance, so the most recent announcement is the one to trust.
          */
         fun portForHost(host: String): Int? =
-            discovered.values.firstOrNull { it.host == host && it.port > 0 }?.port
+            discovered.values
+                .filter { it.host == host && it.port > 0 }
+                .maxByOrNull { it.foundAt }
+                ?.port
     }
 
     /**
@@ -217,10 +224,21 @@ class DnsDiscover private constructor(
 
         if (!isLocal) {
             Log.d(TAG, "Service belongs to another device: $discoveredAddress")
+
+            /*
+             * Wireless debugging that was switched off and on again announces a
+             * new instance, and the old announcement may never be withdrawn, so
+             * anything older for this address is dropped here.
+             */
+            discovered.entries.removeAll { (name, service) ->
+                service.host == discoveredAddress && name != serviceInfo.serviceName
+            }
+
             discovered[serviceInfo.serviceName] = DiscoveredService(
                 host = discoveredAddress!!,
                 port = serviceInfo.port,
-                name = serviceInfo.serviceName
+                name = serviceInfo.serviceName,
+                foundAt = System.currentTimeMillis()
             )
         } else {
             /* This device is always shown as "localhost", never as a found remote. */

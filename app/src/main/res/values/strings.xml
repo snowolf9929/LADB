@@ -159,6 +159,7 @@
 
     <string name="debug_server_starting">Starting ADB server…</string>
     <string name="debug_connect_retry">Could not connect, retrying…</string>
+    <string name="debug_dropping_stale">Dropping the dead connection to %1$s…</string>
     <string name="debug_connect_failed">Your device didn\'t connect to LADB</string>
     <string name="debug_connect_failed_hint">If a reboot doesn\'t work, please contact the developer</string>
     <string name="debug_local_network_denied">Local network access denied, port discovery may fail</string>

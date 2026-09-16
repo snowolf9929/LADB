@@ -92,6 +92,7 @@
 
     <string name="debug_server_starting">正在启动 ADB 服务器…</string>
     <string name="debug_connect_retry">无法连接，正在重试…</string>
+    <string name="debug_dropping_stale">正在清理 %1$s 的失效连接…</string>
     <string name="debug_connect_failed">您的设备未能连接到 LADB</string>
     <string name="debug_connect_failed_hint">如果重启后仍无法解决，请联系开发者</string>
     <string name="debug_local_network_denied">已拒绝本地网络访问，端口发现可能会失败</string>

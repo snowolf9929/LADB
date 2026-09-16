@@ -63,6 +63,14 @@ class ADB(private val context: Context) {
     var activeDeviceId: String = AdbDevice.LOCAL_ID
 
     /**
+     * Does the user have any remote device stored? The ADB server must not be
+     * killed behind their back when they do, or a device that is in the middle
+     * of connecting loses the transport it just got.
+     */
+    @Volatile
+    var remoteDevicesConfigured = false
+
+    /**
      * One output buffer per device; debug messages and shell output share it.
      */
     private val outputFiles = ConcurrentHashMap<String, File>()
@@ -475,12 +483,13 @@ class ADB(private val context: Context) {
             _running.postValue(false)
             debug(context.getString(R.string.debug_shell_dead))
 
-            val otherDevicesConnected = sessions.keys.any { it != AdbDevice.LOCAL_ID }
+            val keepServer = remoteDevicesConfigured ||
+                    sessions.keys.any { it != AdbDevice.LOCAL_ID }
 
-            if (otherDevicesConnected) {
+            if (keepServer) {
                 /*
                  * Killing the server here would take every remote device down
-                 * with this one, so try to re-attach this device first.
+                 * with this one, so try to re-attach this device instead.
                  */
                 if (reconnectLocal())
                     continue
@@ -569,12 +578,23 @@ class ADB(private val context: Context) {
 
     /**
      * Attach a device over the network. Returns true once it takes commands.
+     *
+     * A transport that went offline keeps its address in the ADB server, and
+     * `adb connect` on that same address only reports that it is already
+     * connected without replacing it, so it is dropped first.
      */
-    fun connect(host: String, port: Int): Boolean {
+    fun connect(host: String, port: Int, attempts: Int = CONNECT_ATTEMPTS): Boolean {
         val serial = "$host:$port"
 
         // Connect exits successfully even when it attaches nothing.
-        for (attempt in 1..CONNECT_ATTEMPTS) {
+        for (attempt in 1..attempts) {
+            val state = deviceState(serial)
+
+            if (state != null && state != STATE_DEVICE) {
+                debug(context.getString(R.string.debug_dropping_stale, serial))
+                disconnect(serial)
+            }
+
             adb(false, listOf("connect", serial)).waitFor(1, TimeUnit.MINUTES)
 
             if (isDeviceConnected(serial))
@@ -584,7 +604,7 @@ class ADB(private val context: Context) {
             if (deviceState(serial) == STATE_UNAUTHORIZED)
                 return false
 
-            if (attempt < CONNECT_ATTEMPTS) {
+            if (attempt < attempts) {
                 debug(context.getString(R.string.debug_connect_retry))
                 Thread.sleep(2_000)
             }

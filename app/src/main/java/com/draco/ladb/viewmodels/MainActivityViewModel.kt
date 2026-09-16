@@ -45,6 +45,9 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
 
         /** A connection that held this long starts over with a clean counter. */
         const val RECONNECT_RESET_MS = 2 * 60 * 1000L
+
+        /** How long to wait for mDNS to announce a device when nothing else is known. */
+        const val DISCOVERY_WAIT_MS = 5_000L
     }
 
     private val _outputText = MutableLiveData<String>()
@@ -166,6 +169,9 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
     fun refreshDevices() {
         val context = getApplication<Application>()
         val devices = mutableListOf<AdbDevice>()
+        val records = deviceStore.all()
+
+        adb.remoteDevicesConfigured = records.isNotEmpty()
 
         devices.add(
             AdbDevice(
@@ -180,7 +186,7 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
             )
         )
 
-        deviceStore.all().forEach { record ->
+        records.forEach { record ->
             val id = AdbDevice.remoteId(record.host)
 
             devices.add(
@@ -299,35 +305,53 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
         val context = getApplication<Application>()
         val id = AdbDevice.remoteId(host)
 
-        val port = manualPort?.takeIf { it > 0 }
-            ?: awaitDiscoveredPort(host)
-            ?: deviceStore.find(host)?.lastPort?.takeIf { it > 0 }
-            ?: run {
-                adb.debug(context.getString(R.string.debug_port_unknown, host), id)
-                setState(id, AdbDevice.State.FAILED)
-                return ConnectResult.PORT_UNKNOWN
+        val storedPort = deviceStore.find(host)?.lastPort?.takeIf { it > 0 }
+
+        /*
+         * Try every port that is known. The mDNS announcement is the freshest,
+         * but a stale one there must not stop a port that still works, so the
+         * remembered one is kept as a fallback. Waiting for mDNS is only worth
+         * it when there is nothing else to try.
+         */
+        val ports = LinkedHashSet<Int>()
+        manualPort?.takeIf { it > 0 }?.let { ports.add(it) }
+        awaitDiscoveredPort(host, if (manualPort != null || storedPort != null) 0 else DISCOVERY_WAIT_MS)
+            ?.let { ports.add(it) }
+        storedPort?.let { ports.add(it) }
+
+        if (ports.isEmpty()) {
+            adb.debug(context.getString(R.string.debug_port_unknown, host), id)
+            setState(id, AdbDevice.State.FAILED)
+            return ConnectResult.PORT_UNKNOWN
+        }
+
+        fun tryAllPorts(): Int? {
+            for (port in ports) {
+                adb.debug(context.getString(R.string.debug_connect_remote, "$host:$port"), id)
+                if (adb.connect(host, port)) return port
             }
+            return null
+        }
 
-        adb.debug(context.getString(R.string.debug_connect_remote, "$host:$port"), id)
+        var port = tryAllPorts()
 
-        var connected = adb.connect(host, port)
-
-        if (!connected && allowServerRestart) {
+        if (port == null && allowServerRestart) {
             /*
              * A device paired while the server was running is only reachable
              * once the server has re-read the pairing keys.
              */
             adb.restartServerAndReconnectLocal()
-            connected = adb.connect(host, port)
+            port = tryAllPorts()
         }
 
-        if (!connected) {
-            val unauthorized = adb.deviceState("$host:$port") == ADB.STATE_UNAUTHORIZED
+        if (port == null) {
+            val unauthorized = ports.any { adb.deviceState("$host:$it") == ADB.STATE_UNAUTHORIZED }
+
             adb.debug(
                 context.getString(
                     if (unauthorized) R.string.debug_remote_unauthorized
                     else R.string.debug_remote_connect_failed,
-                    "$host:$port"
+                    ports.joinToString(", ") { "$host:$it" }
                 ),
                 id
             )
