@@ -31,8 +31,6 @@ import com.draco.ladb.BuildConfig
 import com.draco.ladb.R
 import com.draco.ladb.databinding.ActivityMainBinding
 import com.draco.ladb.utils.AdbDevice
-import com.draco.ladb.utils.DiscoveredService
-import com.draco.ladb.utils.DnsDiscover
 import com.draco.ladb.viewmodels.ConnectResult
 import com.draco.ladb.viewmodels.MainActivityViewModel
 import com.google.android.material.button.MaterialButton
@@ -50,6 +48,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var pairDialog: AlertDialog.Builder
 
     private var lastCommand = ""
+
+    /** Whether the shell was already usable, so the keyboard is only asked once. */
+    private var wasReadyForInput = false
 
     /**
      * Lets the open device dialog follow changes while it is on screen.
@@ -133,9 +134,19 @@ class MainActivity : AppCompatActivity() {
 
     private fun setReadyForInput(ready: Boolean) {
         binding.command.isEnabled = ready
-        binding.commandContainer.hint =
-            if (ready) getString(R.string.command_hint) else getString(R.string.command_hint_waiting)
         binding.progress.visibility = if (ready) View.INVISIBLE else View.VISIBLE
+
+        /*
+         * The keyboard is summoned once, when a shell becomes usable, instead
+         * of on every status line that lands in the output.
+         */
+        if (ready && !wasReadyForInput) {
+            binding.command.requestFocus()
+            WindowCompat.getInsetsController(window, binding.command)
+                .show(WindowInsetsCompat.Type.ime())
+        }
+
+        wasReadyForInput = ready
     }
 
     private fun setupDataListeners() {
@@ -144,9 +155,6 @@ class MainActivity : AppCompatActivity() {
             binding.output.text = newText
             binding.outputScrollview.post {
                 binding.outputScrollview.fullScroll(ScrollView.FOCUS_DOWN)
-                binding.command.requestFocus()
-                WindowCompat.getInsetsController(window, binding.command)
-                    .show(WindowInsetsCompat.Type.ime())
             }
         }
 
@@ -326,19 +334,6 @@ class MainActivity : AppCompatActivity() {
                 list.addView(buildDeviceRow(list, device, dialog))
             }
 
-            val discovered = viewModel.discoveredDevices()
-                .distinctBy { it.host }
-                .filter { service -> devices.none { it.host == service.host } }
-
-            if (discovered.isNotEmpty()) {
-                val header = layoutInflater.inflate(R.layout.item_device_header, list, false)
-                header.findViewById<TextView>(R.id.device_header).setText(R.string.device_discovered)
-                list.addView(header)
-
-                discovered.forEach { service ->
-                    list.addView(buildDiscoveredRow(list, service))
-                }
-            }
         }
 
         /* The positive button always reaches the add dialog, even when the list scrolls. */
@@ -385,23 +380,6 @@ class MainActivity : AppCompatActivity() {
         val more = row.findViewById<MaterialButton>(R.id.device_more)
         more.visibility = if (device.isLocal) View.GONE else View.VISIBLE
         more.setOnClickListener { showDeviceOptions(device) }
-
-        return row
-    }
-
-    private fun buildDiscoveredRow(parent: ViewGroup, service: DiscoveredService): View {
-        val row = layoutInflater.inflate(R.layout.item_device, parent, false)
-
-        row.findViewById<TextView>(R.id.device_name).text = service.host
-        row.findViewById<TextView>(R.id.device_detail).text =
-            getString(R.string.device_discovered_detail, service.port)
-
-        val action = row.findViewById<MaterialButton>(R.id.device_action)
-        action.setText(R.string.device_add_short)
-        action.setOnClickListener { showAddDeviceDialog(service.host) }
-        row.setOnClickListener { showAddDeviceDialog(service.host) }
-
-        row.findViewById<MaterialButton>(R.id.device_more).visibility = View.GONE
 
         return row
     }
@@ -531,6 +509,7 @@ class MainActivity : AppCompatActivity() {
         val pairPortInput = container.findViewById<TextInputEditText>(R.id.device_pair_port)
         val codeInput = container.findViewById<TextInputEditText>(R.id.device_code)
         val connectPortInput = container.findViewById<TextInputEditText>(R.id.device_connect_port)
+        val connectPortLayout = container.findViewById<TextInputLayout>(R.id.device_connect_port_layout)
 
         val hostLayout = container.findViewById<TextInputLayout>(R.id.device_host_layout)
         val pairPortLayout = container.findViewById<TextInputLayout>(R.id.device_pair_port_layout)
@@ -538,7 +517,7 @@ class MainActivity : AppCompatActivity() {
 
         if (!prefillHost.isNullOrBlank()) {
             hostInput.setText(prefillHost)
-            DnsDiscover.portForHost(prefillHost)?.let { port ->
+            viewModel.savedPortFor(prefillHost)?.let { port ->
                 connectPortInput.setText(port.toString())
             }
         }
@@ -561,20 +540,28 @@ class MainActivity : AppCompatActivity() {
                 val pairPort = pairPortInput.text.toString().trim()
                 val code = codeInput.text.toString().trim()
 
+                val connectPort = connectPortInput.text.toString().trim()
+
+                /*
+                 * The connect port is only optional for a device that has one
+                 * from an earlier session.
+                 */
+                val portMissing = connectPort.isBlank() && viewModel.savedPortFor(host) == null
+
                 /* Point at the missing fields instead of a message behind the dialog. */
                 hostLayout.error = requiredError(host)
                 pairPortLayout.error = requiredError(pairPort)
                 codeLayout.error = requiredError(code)
+                connectPortLayout.error = if (portMissing) getString(R.string.error_field_required) else null
 
-                if (host.isBlank() || pairPort.isBlank() || code.isBlank())
+                if (host.isBlank() || pairPort.isBlank() || code.isBlank() || portMissing)
                     return@setOnClickListener
 
                 dialog.dismiss()
 
                 val alias = aliasInput.text.toString().trim()
-                val connectPort = connectPortInput.text.toString().trim().ifBlank { null }
 
-                viewModel.addRemoteDevice(alias, host, pairPort, code, connectPort) { result ->
+                viewModel.addRemoteDevice(alias, host, pairPort, code, connectPort.ifBlank { null }) { result ->
                     runOnUiThread { reportConnectResult(alias.ifBlank { host }, host, result) }
                 }
             }

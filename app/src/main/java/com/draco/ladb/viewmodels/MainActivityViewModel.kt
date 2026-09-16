@@ -14,7 +14,6 @@ import androidx.preference.PreferenceManager
 import com.draco.ladb.R
 import com.draco.ladb.utils.ADB
 import com.draco.ladb.utils.AdbDevice
-import com.draco.ladb.utils.DiscoveredService
 import com.draco.ladb.utils.DnsDiscover
 import com.draco.ladb.utils.PairedDeviceStore
 import com.draco.ladb.utils.RemoteDevice
@@ -46,9 +45,6 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
 
         /** A connection that held this long starts over with a clean counter. */
         const val RECONNECT_RESET_MS = 2 * 60 * 1000L
-
-        /** How long to wait for mDNS to announce a device when nothing else is known. */
-        const val DISCOVERY_WAIT_MS = 5_000L
 
         /**
          * How often a connected remote device is nudged awake. It has to be
@@ -345,15 +341,13 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
         val storedPort = deviceStore.find(host)?.lastPort?.takeIf { it > 0 }
 
         /*
-         * Try every port that is known. The mDNS announcement is the freshest,
-         * but a stale one there must not stop a port that still works, so the
-         * remembered one is kept as a fallback. Waiting for mDNS is only worth
-         * it when there is nothing else to try.
+         * Remote devices are given their port by hand. Wireless debugging hands
+         * out a new one every time it is switched on, and watching another
+         * device's announcement over mDNS is not dependable, so the port the
+         * user entered wins and the one that worked last is the fallback.
          */
         val ports = LinkedHashSet<Int>()
         manualPort?.takeIf { it > 0 }?.let { ports.add(it) }
-        awaitDiscoveredPort(host, if (manualPort != null || storedPort != null) 0 else DISCOVERY_WAIT_MS)
-            ?.let { ports.add(it) }
         storedPort?.let { ports.add(it) }
 
         if (ports.isEmpty()) {
@@ -475,11 +469,10 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
             adb.debug(disconnectReason(host, session.serial, alias), id)
 
             /*
-             * A device that stopped announcing itself had wireless debugging
-             * switched off, which Android does on its own after a screen off.
+             * A device that went away on its own usually had its wireless
+             * debugging switched off, which Android does after a screen off.
              */
-            if (DnsDiscover.portForHost(host) == null)
-                adb.debug(context.getString(R.string.debug_remote_lost_hint), id)
+            adb.debug(context.getString(R.string.debug_remote_lost_hint), id)
 
             refreshDevices()
         }
@@ -533,10 +526,6 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
             context.getString(
                 if (state == null) R.string.reason_not_listed else R.string.reason_state,
                 state ?: ""
-            ),
-            context.getString(
-                if (DnsDiscover.portForHost(host) != null) R.string.reason_announced
-                else R.string.reason_not_announced
             )
         )
     }
@@ -608,28 +597,14 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
     }
 
     /**
-     * Devices with wireless debugging on that are visible on this network.
+     * The port a device was last reached on, so the add dialog can offer it.
      */
-    fun discoveredDevices(): List<DiscoveredService> =
-        DnsDiscover.discoveredServices()
+    fun savedPortFor(host: String): Int? = deviceStore.find(host)?.lastPort?.takeIf { it > 0 }
 
     private fun setState(id: String, state: AdbDevice.State) {
         if (id == AdbDevice.LOCAL_ID) return
         remoteStates[id] = state
         refreshDevices()
-    }
-
-    /**
-     * Wait a moment for mDNS to announce the connect port of a device.
-     */
-    private fun awaitDiscoveredPort(host: String, timeoutMs: Long = 5_000): Int? {
-        val deadline = System.currentTimeMillis() + timeoutMs
-
-        while (true) {
-            DnsDiscover.portForHost(host)?.let { return it }
-            if (System.currentTimeMillis() >= deadline) return null
-            Thread.sleep(250)
-        }
     }
 
     /* ------------------------------------------------------------------ */

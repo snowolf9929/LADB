@@ -49,8 +49,8 @@ and up). No computer is involved.
 2. Tap "Pair device with pairing code" and note the **IP address, pairing port and 6-digit pairing code**;
 3. In LADB on **this device**, tap ＋ in the device bar at the top ("Add remote device") and fill in a name (optional),
    the IP address, the pairing port and the pairing code;
-   - The connect port may be left empty: LADB finds it over mDNS. It can also be copied from the top of the Wireless
-     debugging page on the other device;
+   - the connect port, which is the one shown at the **top** of the Wireless debugging page on the other device (it is
+     not the pairing port);
 4. Tap "Pair & connect". The other device may show "Allow USB debugging?"; tap "Allow" there once.
 
 ## Later connections (no pairing code)
@@ -63,8 +63,13 @@ Once paired, the pairing is kept in the app's private storage:
 
 So **the second connection is just**: open LADB → tap the device bar → pick the device → tap "Connect".
 
-> Wireless debugging hands out a **new connect port** every time it is switched on, so the port is not permanent. LADB
-> discovers the current one over mDNS; if that fails, set it by hand with "Connect port" in the device menu (⋮).
+> Wireless debugging hands out a **new connect port** every time it is switched on, so the port is not permanent and a
+> new one has to be typed after that. Change it any time with "Connect port" in the device menu (⋮); the last port that
+> worked is remembered, so "Connect" alone will try that one.
+>
+> Why the port is not discovered: mDNS is dependable for finding **this** device's own port, which is what the local
+> flow has always used, but another phone's announcement does not reach every router or access point. Remote ports are
+> typed in instead, which also keeps the behaviour predictable.
 
 ## Notes and limits
 

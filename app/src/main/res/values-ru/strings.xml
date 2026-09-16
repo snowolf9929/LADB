@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="command_hint">Shell команда</string>
-    <string name="command_hint_waiting">Ожидание соединения…</string>
 
     <string name="bookmarks">Закладки</string>
     <string name="last_command">Последняя команда</string>
@@ -127,9 +126,6 @@
     <string name="device_connect">Подключить</string>
     <string name="device_connecting">Подключение…</string>
     <string name="device_options">Действия с устройством</string>
-    <string name="device_discovered">Найдены в этой сети</string>
-    <string name="device_discovered_detail">Порт беспроводной отладки %1$d</string>
-    <string name="device_add_short">Добавить</string>
     <string name="device_rename">Переименовать</string>
     <string name="device_repair">Сопрячь заново</string>
     <string name="device_set_port">Порт подключения</string>
@@ -145,12 +141,12 @@
     <string name="add_hint_pair_port">Порт сопряжения</string>
     <string name="add_hint_code">Код сопряжения</string>
     <string name="add_hint_connect_port">Порт подключения (необязательно)</string>
-    <string name="add_hint_connect_port_helper">Оставьте пустым для автоопределения</string>
+    <string name="add_hint_connect_port_helper">Порт, показанный сверху на странице «Беспроводная отладка» того устройства</string>
     <string name="pair_and_connect">Сопрячь и подключить</string>
 
     <string name="error_field_required">Обязательно</string>
     <string name="connect_result_pair_failed">Не удалось сопрячь: проверьте код и порт сопряжения</string>
-    <string name="connect_result_port_unknown">%1$s не сообщает порт подключения; посмотрите его на странице беспроводной отладки и введите вручную</string>
+    <string name="connect_result_port_unknown">Для %1$s неизвестен порт подключения; введите тот, что показан сверху на странице «Беспроводная отладка»</string>
     <string name="connect_result_connect_failed">Не удалось подключиться к %1$s; убедитесь, что оба устройства в одной сети</string>
     <string name="connect_result_unauthorized">%1$s ещё не авторизовало это устройство; нажмите «Разрешить» на его экране</string>
 
@@ -158,19 +154,17 @@
     <string name="debug_pairing_remote_failed">Не удалось сопрячь с %1$s</string>
     <string name="debug_paired_remote">Сопряжено, подключение…</string>
     <string name="debug_connect_remote">Подключение к %1$s…</string>
-    <string name="debug_port_unknown">%1$s не сообщает порт беспроводной отладки</string>
+    <string name="debug_port_unknown">Для %1$s неизвестен порт подключения</string>
     <string name="debug_remote_connected">Подключено к %1$s</string>
     <string name="debug_auto_named">Имя получено от устройства: %1$s</string>
     <string name="debug_remote_connect_failed">%1$s не приняло подключение</string>
     <string name="debug_remote_unauthorized">%1$s не авторизовано; нажмите «Разрешить» на том устройстве</string>
     <string name="debug_remote_reconnecting">Соединение потеряно, переподключение к %1$s (попытка %2$d)…</string>
     <string name="debug_remote_reconnected">Подключено заново к %1$s</string>
-    <string name="debug_remote_lost">Потеряно соединение с %1$s (adb: %2$s; беспроводная отладка: %3$s)</string>
+    <string name="debug_remote_lost">Потеряно соединение с %1$s (adb: %2$s)</string>
     <string name="debug_server_kept_alive">Сервер ADB остаётся запущенным, переподключаем только это устройство…</string>
     <string name="reason_not_listed">больше нет в списке</string>
     <string name="reason_state">состояние %1$s</string>
-    <string name="reason_announced">всё ещё объявляется</string>
-    <string name="reason_not_announced">больше не объявляется, вероятно выключена</string>
     <string name="debug_remote_lost_hint">Android сам выключает беспроводную отладку после отключения экрана или смены сети, поэтому во время отладки держите экран того устройства включённым: Для разработчиков → «Не выключать экран» или большее время до отключения экрана.</string>
     <string name="debug_server_restarting">Перезапуск сервера ADB для обновления ключей сопряжения…</string>
     <string name="shell_entered_remote">Подключено к %1$s (удалённое устройство)</string>

@@ -17,20 +17,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 private const val TAG = "DNS"
 
-/**
- * A wireless debugging service announced on the local network.
- *
- * The one belonging to this device is what [DnsDiscover.adbPort] is picked
- * from; every other address is another phone that LADB could connect to.
- */
-data class DiscoveredService(
-    val host: String,
-    val port: Int,
-    val name: String,
-    /** When this announcement was resolved, so the newest one wins. */
-    val foundAt: Long = 0L
-)
-
 class DnsDiscover private constructor(
     private val nsdManager: NsdManager
 ) {
@@ -48,28 +34,9 @@ class DnsDiscover private constructor(
         var pendingResolves = AtomicBoolean(false)
         var aliveTime: Long? = null
 
-        /** Every `_adb-tls-connect._tcp` service seen so far, keyed by service name. */
-        private val discovered = ConcurrentHashMap<String, DiscoveredService>()
-
         fun getInstance(nsdManager: NsdManager): DnsDiscover {
             return instance ?: DnsDiscover(nsdManager).also { instance = it }
         }
-
-        /**
-         * Devices with wireless debugging enabled that are visible on this network.
-         */
-        fun discoveredServices(): List<DiscoveredService> = discovered.values.toList()
-
-        /**
-         * The connect port currently announced by a host, if it is announcing
-         * one. A device that restarts wireless debugging announces a new
-         * instance, so the most recent announcement is the one to trust.
-         */
-        fun portForHost(host: String): Int? =
-            discovered.values
-                .filter { it.host == host && it.port > 0 }
-                .maxByOrNull { it.foundAt }
-                ?.port
     }
 
     /**
@@ -215,38 +182,16 @@ class DnsDiscover private constructor(
 
         /*
          * Only the service announced by this device may set the local port.
-         * Anything else is another phone with wireless debugging turned on,
-         * which is offered as a remote device instead.
+         * Another phone on the network advertises the same service type, and
+         * letting it through would point this device at a port of its own that
+         * nothing is listening on. Remote devices are given their port by hand
+         * instead.
          */
         val localAddresses = getLocalIpAddresses()
-        val isLocal = discoveredAddress == null || localAddresses.isEmpty() ||
-                discoveredAddress in localAddresses
-
-        if (!isLocal) {
-            Log.d(TAG, "Service belongs to another device: $discoveredAddress")
-
-            /*
-             * Wireless debugging that was switched off and on again announces a
-             * new instance, and the old announcement may never be withdrawn, so
-             * anything older for this address is dropped here.
-             */
-            discovered.entries.removeAll { (name, service) ->
-                service.host == discoveredAddress && name != serviceInfo.serviceName
-            }
-
-            discovered[serviceInfo.serviceName] = DiscoveredService(
-                host = discoveredAddress!!,
-                port = serviceInfo.port,
-                name = serviceInfo.serviceName,
-                foundAt = System.currentTimeMillis()
-            )
-        } else {
-            /* This device is always shown as "localhost", never as a found remote. */
-            discovered.remove(serviceInfo.serviceName)
-        }
-
-        if (!isLocal)
+        if (discoveredAddress != null && localAddresses.isNotEmpty() && discoveredAddress !in localAddresses) {
+            Log.d(TAG, "Service belongs to another device, skipping: $discoveredAddress")
             return
+        }
 
         updateIfNewest(serviceInfo)
     }
@@ -374,7 +319,6 @@ class DnsDiscover private constructor(
 
         override fun onServiceLost(service: NsdServiceInfo) {
             Log.e(TAG, "Service lost: $service")
-            discovered.remove(service.serviceName)
         }
 
         override fun onDiscoveryStopped(serviceType: String) {

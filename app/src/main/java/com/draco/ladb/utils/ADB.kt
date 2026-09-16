@@ -29,6 +29,8 @@ class ADB(private val context: Context) {
         const val STATE_DEVICE = "device"
         const val STATE_UNAUTHORIZED = "unauthorized"
 
+        const val LOCAL_HOST = "localhost"
+
         @SuppressLint("StaticFieldLeak")
         @Volatile
         private var instance: ADB? = null
@@ -309,7 +311,7 @@ class ADB(private val context: Context) {
                 var waitProcess = false
 
                 if (adbPort != null) {
-                    waitProcess = connect("localhost", adbPort)
+                    waitProcess = connect(LOCAL_HOST, adbPort)
 
                     /* Only remember a port that actually accepted the connection. */
                     if (waitProcess)
@@ -372,7 +374,7 @@ class ADB(private val context: Context) {
         Log.w("DEVICES", "Multiple devices detected...")
 
         /* Choose the first local device (hopefully the only). */
-        deviceList.firstOrNull { it.contains("localhost") }?.let { serialId ->
+        deviceList.firstOrNull { it.contains(LOCAL_HOST) }?.let { serialId ->
             Log.w("DEVICES", "Choosing first local device: $serialId")
             return serialId
         }
@@ -551,12 +553,12 @@ class ADB(private val context: Context) {
 
         val port = localPort ?: return false
 
-        if (!connect("localhost", port))
+        if (!connect(LOCAL_HOST, port))
             return false
 
         openSession(
             deviceId = AdbDevice.LOCAL_ID,
-            serial = "localhost:$port",
+            serial = "$LOCAL_HOST:$port",
             autoShell = true,
             banner = context.getString(R.string.shell_entered_adb)
         )
@@ -609,12 +611,15 @@ class ADB(private val context: Context) {
     fun connect(host: String, port: Int, attempts: Int = CONNECT_ATTEMPTS): Boolean {
         val serial = "$host:$port"
 
+        /* Whoever is being connected is the one that should hear about it. */
+        val deviceId = if (host == LOCAL_HOST) AdbDevice.LOCAL_ID else AdbDevice.remoteId(host)
+
         // Connect exits successfully even when it attaches nothing.
         for (attempt in 1..attempts) {
             val state = deviceState(serial)
 
             if (state != null && state != STATE_DEVICE) {
-                debug(context.getString(R.string.debug_dropping_stale, serial))
+                debug(context.getString(R.string.debug_dropping_stale, serial), deviceId)
                 disconnect(serial)
             }
 
@@ -628,7 +633,7 @@ class ADB(private val context: Context) {
                 return false
 
             if (attempt < attempts) {
-                debug(context.getString(R.string.debug_connect_retry))
+                debug(context.getString(R.string.debug_connect_retry), deviceId)
                 Thread.sleep(2_000)
             }
         }
@@ -654,10 +659,10 @@ class ADB(private val context: Context) {
      * with stale host keys, so it is restarted and the local device is
      * re-attached without going through the whole wireless debugging dance.
      */
-    fun restartServerAndReconnectLocal() {
+    fun restartServerAndReconnectLocal(reportTo: String = AdbDevice.LOCAL_ID) {
         val wasRunning = _running.value == true
 
-        debug(context.getString(R.string.debug_server_restarting))
+        debug(context.getString(R.string.debug_server_restarting), reportTo)
 
         sessions.values.forEach { it.killProcess() }
         sessions.clear()
@@ -703,7 +708,7 @@ class ADB(private val context: Context) {
 
         val session = AdbSession(
             deviceId = deviceId,
-            serial = serial ?: if (deviceId == AdbDevice.LOCAL_ID) "localhost" else deviceId,
+            serial = serial ?: if (deviceId == AdbDevice.LOCAL_ID) LOCAL_HOST else deviceId,
             outputBufferFile = outputFile,
             process = process
         )
