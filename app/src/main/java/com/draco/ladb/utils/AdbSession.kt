@@ -47,12 +47,20 @@ class AdbSession internal constructor(
 
     internal fun waitFor(): Int = process.waitFor()
 
-    internal fun destroy() {
-        expectDeath()
+    /**
+     * Tear the process down without marking the death as expected, so the
+     * watcher treats it as a connection that should be brought back.
+     */
+    internal fun killProcess() {
         try {
             process.destroyForcibly().waitFor()
         } catch (e: Exception) {
             e.printStackTrace()
         }
+    }
+
+    internal fun destroy() {
+        expectDeath()
+        killProcess()
     }
 }

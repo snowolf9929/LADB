@@ -36,6 +36,17 @@ enum class ConnectResult {
 }
 
 class MainActivityViewModel(application: Application) : AndroidViewModel(application) {
+    private companion object {
+        /** How many times a dropped remote device is brought back before giving up. */
+        const val MAX_RECONNECT_ATTEMPTS = 3
+
+        /** How long to wait between those attempts. */
+        const val RECONNECT_DELAY_MS = 4_000L
+
+        /** A connection that held this long starts over with a clean counter. */
+        const val RECONNECT_RESET_MS = 2 * 60 * 1000L
+    }
+
     private val _outputText = MutableLiveData<String>()
     val outputText: LiveData<String> = _outputText
 
@@ -68,6 +79,12 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
     val activeDevice: LiveData<AdbDevice?> = _activeDevice
 
     private val remoteStates = ConcurrentHashMap<String, AdbDevice.State>()
+
+    /** When a remote shell was opened, so a flapping link can be told from a long one. */
+    private val sessionStartedAt = ConcurrentHashMap<String, Long>()
+
+    /** Consecutive automatic reconnects, so a dead link cannot loop forever. */
+    private val reconnectAttempts = ConcurrentHashMap<String, Int>()
 
     @Volatile
     private var localConnecting = false
@@ -211,6 +228,9 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
         }
 
         viewModelScope.launch(Dispatchers.IO) {
+            /* The user asked for this one, so it gets a full set of attempts. */
+            reconnectAttempts[id] = 0
+
             setState(id, AdbDevice.State.CONNECTING)
             val result = establish(host, manualPort = null, allowServerRestart = false)
             refreshDevices()
@@ -371,6 +391,7 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
         ) ?: return
 
         remoteStates[id] = AdbDevice.State.CONNECTED
+        sessionStartedAt[id] = System.currentTimeMillis()
         refreshDevices()
 
         viewModelScope.launch(Dispatchers.IO) {
@@ -381,10 +402,76 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
             if (replacement != null && replacement !== session) return@launch
 
             adb.forgetSession(id, session)
+
+            /* The user closed it, or another device took its place. */
+            if (session.deathExpected) return@launch
+
+            /*
+             * A wireless link drops for all sorts of reasons, most of them
+             * temporary, so give it a few chances before calling it gone.
+             */
+            if (reconnectRemote(host, id, alias)) return@launch
+
             remoteStates[id] = AdbDevice.State.OFFLINE
-            adb.debug(context.getString(R.string.debug_remote_disconnected, alias), id)
+            adb.debug(disconnectReason(host, session.serial, alias), id)
             refreshDevices()
         }
+    }
+
+    /**
+     * Try to bring a dropped remote device back. Returns true when it is back
+     * on its own session.
+     */
+    private fun reconnectRemote(host: String, id: String, alias: String): Boolean {
+        val context = getApplication<Application>()
+        val startedAt = sessionStartedAt[id] ?: 0L
+
+        /* A connection that held for a while starts over with a clean slate. */
+        if (System.currentTimeMillis() - startedAt > RECONNECT_RESET_MS)
+            reconnectAttempts[id] = 0
+
+        var attempt = reconnectAttempts[id] ?: 0
+
+        while (attempt < MAX_RECONNECT_ATTEMPTS) {
+            attempt++
+            reconnectAttempts[id] = attempt
+
+            remoteStates[id] = AdbDevice.State.CONNECTING
+            refreshDevices()
+            adb.debug(context.getString(R.string.debug_remote_reconnecting, alias, attempt), id)
+
+            Thread.sleep(RECONNECT_DELAY_MS)
+
+            if (establish(host, manualPort = null, allowServerRestart = false) == ConnectResult.CONNECTED) {
+                reconnectAttempts[id] = 0
+                adb.debug(context.getString(R.string.debug_remote_reconnected, alias), id)
+                return true
+            }
+        }
+
+        return false
+    }
+
+    /**
+     * Why a device counts as gone: what adb still says about it, and whether it
+     * is still announcing wireless debugging on this network.
+     */
+    private fun disconnectReason(host: String, serial: String, alias: String): String {
+        val context = getApplication<Application>()
+        val state = adb.deviceState(serial)
+
+        return context.getString(
+            R.string.debug_remote_lost,
+            alias,
+            context.getString(
+                if (state == null) R.string.reason_not_listed else R.string.reason_state,
+                state ?: ""
+            ),
+            context.getString(
+                if (DnsDiscover.portForHost(host) != null) R.string.reason_announced
+                else R.string.reason_not_announced
+            )
+        )
     }
 
     /**

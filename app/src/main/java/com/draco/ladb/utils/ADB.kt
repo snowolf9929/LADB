@@ -474,11 +474,63 @@ class ADB(private val context: Context) {
 
             _running.postValue(false)
             debug(context.getString(R.string.debug_shell_dead))
+
+            val otherDevicesConnected = sessions.keys.any { it != AdbDevice.LOCAL_ID }
+
+            if (otherDevicesConnected) {
+                /*
+                 * Killing the server here would take every remote device down
+                 * with this one, so try to re-attach this device first.
+                 */
+                if (reconnectLocal())
+                    continue
+
+                debug(context.getString(R.string.debug_server_kept_alive))
+                Thread.sleep(3_000)
+                initServer()
+                continue
+            }
+
             adb(false, listOf("kill-server")).waitFor(30, TimeUnit.SECONDS)
 
             Thread.sleep(3_000)
             initServer()
         }
+    }
+
+    /**
+     * Attach this device again without touching the ADB server, so devices
+     * connected to it keep their connections. Returns false when the port this
+     * device listens on is not known.
+     */
+    private fun reconnectLocal(): Boolean {
+        val autoShell = sharedPrefs.getBoolean(context.getString(R.string.auto_shell_key), true)
+
+        if (!autoShell) {
+            openSession(
+                deviceId = AdbDevice.LOCAL_ID,
+                serial = null,
+                autoShell = false,
+                banner = context.getString(R.string.shell_entered_non_adb)
+            )
+            _running.postValue(true)
+            return true
+        }
+
+        val port = localPort ?: return false
+
+        if (!connect("localhost", port))
+            return false
+
+        openSession(
+            deviceId = AdbDevice.LOCAL_ID,
+            serial = "localhost:$port",
+            autoShell = true,
+            banner = context.getString(R.string.shell_entered_adb)
+        )
+        _running.postValue(true)
+
+        return true
     }
 
     /**
@@ -561,12 +613,10 @@ class ADB(private val context: Context) {
      */
     fun restartServerAndReconnectLocal() {
         val wasRunning = _running.value == true
-        val autoShell = sharedPrefs.getBoolean(context.getString(R.string.auto_shell_key), true)
-        val port = localPort
 
         debug(context.getString(R.string.debug_server_restarting))
 
-        sessions.values.forEach { it.destroy() }
+        sessions.values.forEach { it.killProcess() }
         sessions.clear()
 
         killServer()
@@ -578,28 +628,8 @@ class ADB(private val context: Context) {
         if (!wasRunning)
             return
 
-        if (!autoShell) {
-            openSession(
-                deviceId = AdbDevice.LOCAL_ID,
-                serial = null,
-                autoShell = false,
-                banner = context.getString(R.string.shell_entered_non_adb)
-            )
-            _running.postValue(true)
-            return
-        }
-
-        if (port != null && connect("localhost", port)) {
-            openSession(
-                deviceId = AdbDevice.LOCAL_ID,
-                serial = "localhost:$port",
-                autoShell = true,
-                banner = context.getString(R.string.shell_entered_adb)
-            )
-            _running.postValue(true)
-        } else {
+        if (!reconnectLocal())
             initServer()
-        }
     }
 
     /**
